@@ -38,44 +38,43 @@ void build_vendors(String target_folder_path, bool build_to_web,
   int num_desktop_flags_list = stack_array_size(desktop_flags_list);
 
   // Array to store the paths of all generated object files.
-  slc_DynamicArray(String) object_files =
-      slc_dynamic_array_create(String, 16, arena_ptr);
+  DynamicArray(String) object_files =
+      dynamic_array_create(String, 16, arena_ptr);
 
   // Compile each raylib module
   for (int i = 0; i < num_raylib_modules; i++) {
-    slc_DynamicArray(String) args =
-        slc_dynamic_array_create(String, 32, arena_ptr);
+    DynamicArray(String) args = dynamic_array_create(String, 32, arena_ptr);
 
     // 1. Add the compiler command
-    slc_dynamic_array_push_back(&args, c_compiler);
+    dynamic_array_push_back(&args, c_compiler);
 
     // 2. Add all the compiler flags, each as a separate argument
     for (int j = 0; j < num_desktop_flags_list; j++) {
-      slc_dynamic_array_push_back(&args, desktop_flags_list[j]);
+      dynamic_array_push_back(&args, desktop_flags_list[j]);
     }
 
     // 3. Add the "-c" flag
-    slc_dynamic_array_push_back(&args, string_from_cstr("-c", arena_ptr));
+    dynamic_array_push_back(&args, string_from_cstr("-c", arena_ptr));
 
     // 4. Build and add the source file path
     String source_file =
         string_from_view(string_view(&raylib_folder_path), arena_ptr);
     string_append_view(&source_file, string_view(&raylib_modules[i]));
     string_append_cstr(&source_file, ".c");
-    slc_dynamic_array_push_back(&args, source_file);
+    dynamic_array_push_back(&args, source_file);
 
     // 5. Add the "-o" flag
-    slc_dynamic_array_push_back(&args, string_from_cstr("-o", arena_ptr));
+    dynamic_array_push_back(&args, string_from_cstr("-o", arena_ptr));
 
     // 6. Build and add the object file path
     String object_file =
         string_from_view(string_view(&target_folder_path), arena_ptr);
     string_append_view(&object_file, string_view(&raylib_modules[i]));
     string_append_cstr(&object_file, ".o");
-    slc_dynamic_array_push_back(&args, object_file);
+    dynamic_array_push_back(&args, object_file);
 
     // Keep track of the object file for the final linking step.
-    slc_dynamic_array_push_back(&object_files, object_file);
+    dynamic_array_push_back(&object_files, object_file);
 
     printf("Executing command: ");
     for (size_t k = 0; k < args.size; k++) {
@@ -90,24 +89,23 @@ void build_vendors(String target_folder_path, bool build_to_web,
   // After compiling all modules, link them into a static library.
   printf("Linking static library libraylib.a...\n");
 
-  slc_DynamicArray(String) ar_args =
-      slc_dynamic_array_create(String, 32, arena_ptr);
+  DynamicArray(String) ar_args = dynamic_array_create(String, 32, arena_ptr);
 
   // 1. Add the archiver command "ar"
-  slc_dynamic_array_push_back(&ar_args, string_from_cstr("ar", arena_ptr));
+  dynamic_array_push_back(&ar_args, string_from_cstr("ar", arena_ptr));
 
   // 2. Add archiver flags "rcs"
-  slc_dynamic_array_push_back(&ar_args, string_from_cstr("rcs", arena_ptr));
+  dynamic_array_push_back(&ar_args, string_from_cstr("rcs", arena_ptr));
 
   // 3. Build and add the output library path
   String library_file =
       string_from_view(string_view(&target_folder_path), arena_ptr);
   string_append_cstr(&library_file, "libraylib.a");
-  slc_dynamic_array_push_back(&ar_args, library_file);
+  dynamic_array_push_back(&ar_args, library_file);
 
   // 4. Add all the object files as arguments
   for (size_t i = 0; i < object_files.size; i++) {
-    slc_dynamic_array_push_back(&ar_args, object_files.data[i]);
+    dynamic_array_push_back(&ar_args, object_files.data[i]);
   }
 
   printf("Executing command: ");
@@ -124,40 +122,39 @@ void build_game(String build_folder_path, bool build_to_web,
                 MemArena *arena_ptr) {
   printf("Building game executable...\n");
 
-  slc_DynamicArray(String) args =
-      slc_dynamic_array_create(String, 32, arena_ptr);
+  DynamicArray(String) args = dynamic_array_create(String, 32, arena_ptr);
 
   // 1. Compiler
-  slc_dynamic_array_push_back(&args, string_from_cstr("gcc", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("gcc", arena_ptr));
 
   // 2. Flags
-  slc_dynamic_array_push_back(&args, string_from_cstr("-std=c99", arena_ptr));
-  slc_dynamic_array_push_back(&args, string_from_cstr("-Iraylib", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-std=c99", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-Iraylib", arena_ptr));
 
   // 3. Output file
   String output_file =
       string_from_view(string_view(&build_folder_path), arena_ptr);
   string_append_cstr(&output_file, "game");
-  slc_dynamic_array_push_back(&args, string_from_cstr("-o", arena_ptr));
-  slc_dynamic_array_push_back(&args, output_file);
+  dynamic_array_push_back(&args, string_from_cstr("-o", arena_ptr));
+  dynamic_array_push_back(&args, output_file);
 
   // 4. Source file
-  slc_dynamic_array_push_back(&args, string_from_cstr("src/main.c", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("src/main.c", arena_ptr));
 
   // 5. Library Path
   String lib_path = string_from_cstr("-L", arena_ptr);
   string_append_view(&lib_path, string_view(&build_folder_path));
-  slc_dynamic_array_push_back(&args, lib_path);
+  dynamic_array_push_back(&args, lib_path);
 
   // 6. Libraries to link
-  slc_dynamic_array_push_back(&args, string_from_cstr("-lraylib", arena_ptr));
-  slc_dynamic_array_push_back(&args, string_from_cstr("-lm", arena_ptr));
-  slc_dynamic_array_push_back(&args, string_from_cstr("-pthread", arena_ptr));
-  slc_dynamic_array_push_back(&args, string_from_cstr("-ldl", arena_ptr));
-  slc_dynamic_array_push_back(&args, string_from_cstr("-lrt", arena_ptr));
-  slc_dynamic_array_push_back(&args, string_from_cstr("-lX11", arena_ptr));
-  slc_dynamic_array_push_back(&args, string_from_cstr("-lXrandr", arena_ptr));
-  slc_dynamic_array_push_back(&args, string_from_cstr("-lGL", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-lraylib", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-lm", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-pthread", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-ldl", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-lrt", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-lX11", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-lXrandr", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("-lGL", arena_ptr));
 
   printf("Executing command: ");
   for (size_t k = 0; k < args.size; k++) {
