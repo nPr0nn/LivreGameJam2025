@@ -17,6 +17,9 @@ TODO:
 // System/Platform/Architecture Detection for SLC
 //=============================================================================
 
+#ifndef SLC_LIBRARY_H
+#define SLC_LIBRARY_H
+
 // OS Detection
 #if defined(__linux__)
 #define SLC_PLATFORM_LINUX
@@ -177,8 +180,6 @@ typedef bool b8;
 //  Implementations Summary
 // =============================================================================
 
-#define SLC_IMPL
-
 #ifdef SLC_IMPL
 #define SLC_MEMORY_MANAGEMENT_IMPL
 #define SLC_IO_IMPL
@@ -223,10 +224,12 @@ SLC_API_PUBLIC void *slc_malloc(usize size);
 SLC_API_PUBLIC void slc_free(void *block);
 
 SLC_API_PUBLIC LIBC_DEP void *slc_memcpy(void *destination, const void *source,
-                                         size_t num);
+                                         usize num);
 
 SLC_API_PUBLIC LIBC_DEP i32 slc_memcmp(const void *ptr1, const void *ptr2,
-                                       size_t num);
+                                       usize num);
+
+SLC_API_PUBLIC LIBC_DEP void *slc_memset(void *ptr, i32 value, usize num);
 
 // Chunk of Memory for Arenas
 #define SLC_CHUNK_DEFAULT_SIZE SLC_KB(8)
@@ -330,13 +333,17 @@ SLC_API_PUBLIC LIBC_DEP void *slc_malloc(usize size) { return malloc(size); }
 SLC_API_PUBLIC LIBC_DEP void slc_free(void *block) { free(block); }
 
 SLC_API_PUBLIC LIBC_DEP void *slc_memcpy(void *destination, const void *source,
-                                         size_t num) {
+                                         usize num) {
   return memcpy(destination, source, num);
 }
 
 SLC_API_PUBLIC LIBC_DEP i32 slc_memcmp(const void *ptr1, const void *ptr2,
-                                       size_t num) {
+                                       usize num) {
   return memcmp(ptr1, ptr2, num);
+}
+
+SLC_API_PUBLIC LIBC_DEP void *slc_memset(void *ptr, i32 value, usize num) {
+  return memset(ptr, value, num);
 }
 
 // Memory Arenas
@@ -390,7 +397,7 @@ SLC_API_PUBLIC void *slc_mem_arena_alloc(slc_MemArena *arena, usize size) {
 SLC_API_PUBLIC void *slc_mem_arena_calloc(slc_MemArena *arena, usize size) {
   void *ptr = slc_mem_arena_alloc(arena, size);
   if (ptr)
-    memset(ptr, 0, size);
+    slc_memset(ptr, 0, size);
   return ptr;
 }
 
@@ -459,7 +466,7 @@ SLC_API_PUBLIC void *slc_mem_arena_calloc_chunk(slc_MemArena *arena,
                                                 usize size) {
   void *ptr = slc_mem_arena_alloc_chunk(arena, size);
   if (ptr)
-    memset(ptr, 0, size);
+    slc_memset(ptr, 0, size);
   return ptr;
 }
 
@@ -474,7 +481,7 @@ SLC_API_PUBLIC void *slc_mem_arena_realloc_chunk(slc_MemArena *arena, void *ptr,
       if (!new_ptr)
         return NULL;
       usize copy_size = size < chunk->used ? size : chunk->used;
-      memcpy(new_ptr, ptr, copy_size);
+      slc_memcpy(new_ptr, ptr, copy_size);
       slc_mem_arena_free_chunk(arena, ptr);
       return new_ptr;
     }
@@ -526,6 +533,7 @@ SLC_API_PUBLIC i32 slc_read_line(char *buffer, i32 size);
 
 #ifdef SLC_NO_LIB_PREFIX
 #define slc_print print
+#define slc_stream_print stream_print
 #define slc_read_line read_line
 #endif
 
@@ -535,7 +543,26 @@ SLC_API_PUBLIC i32 slc_read_line(char *buffer, i32 size);
 
 #ifdef SLC_IO_IMPL
 
+/// @brief Prints formatted text to the given FILE stream.
+/// @param stream Target stream (e.g., stdout or stderr)
+/// @param format printf-style format string
+SLC_API_PUBLIC LIBC_DEP void slc_stream_print(FILE *stream, const char *format,
+                                              ...) {
+  if (!stream || !format)
+    return; // safety guard
+
+  va_list args;
+  va_start(args, format);
+  vfprintf(stream, format, args);
+  va_end(args);
+}
+
+/// @brief Prints formatted text to stdout.
+/// @param format printf-style format string
 SLC_API_PUBLIC LIBC_DEP void slc_print(const char *format, ...) {
+  if (!format)
+    return;
+
   va_list args;
   va_start(args, format);
   vprintf(format, args);
@@ -719,7 +746,9 @@ typedef slc_DynamicArray(char) slc_String;
 #define string_append_char slc_string_append_char
 #define string_append_cstr slc_string_append_cstr
 #define string_append_view slc_string_append_view
+#define string_append slc_string_append
 #define string_equals_view slc_string_equals_view
+#define string_equals_cstr slc_string_equals_cstr
 #define string_substring_view slc_string_substring_view
 #define string_c_str slc_string_c_str
 #define string_view slc_string_view
@@ -736,45 +765,71 @@ SLC_API_PUBLIC void slc_string_append_char(slc_String *str, char c);
 SLC_API_PUBLIC void slc_string_append_cstr(slc_String *str, const char *cstr);
 SLC_API_PUBLIC void slc_string_append_view(slc_String *str,
                                            slc_StringView view);
+SLC_API_PUBLIC void slc_string_append(slc_String *str1, slc_String *str2);
 SLC_API_PUBLIC void slc_string_clear(slc_String *str);
 
 /// @brief Retutn lenght of c string
-SLC_API_INLINE LIBC_DEP i32 slc_strlen(const char *cstr) {
-  return strlen(cstr);
+SLC_API_INLINE i32 slc_strlen(const char *cstr) {
+  if (cstr == NULL)
+    return -1; // signal invalid input
+
+  i32 len = 0;
+  while (cstr[len] != '\0') {
+    len++;
+    if (len > SLC_MB(1))
+      return -2; // signal untrusted input
+  }
+  return len;
 }
 
 /// @brief Compares a string and a StringView for equality.
 /// @param str Pointer to the slc_String.
 /// @param view The StringView to compare against.
-/// @return non-zero if their contents are identical, 0 otherwise.
-SLC_API_INLINE int slc_string_equals_view(const slc_String *str,
-                                          slc_StringView view) {
+SLC_API_INLINE bool slc_string_equals_view(const slc_String *str,
+                                           slc_StringView view) {
   if (!str)
-    return 0; // A null string is not equal to any view.
+    return false; // A null string is not equal to any view.
   if (str->size != view.size)
-    return 0;
+    return false;
   if (str->size == 0)
-    return 1; // Both are empty
+    return true; // Both are empty
   if (!view.data)
-    return 0; // Non-empty string vs null view
+    return false; // Non-empty string vs null view
   return slc_memcmp(str->data, view.data, str->size) == 0;
 }
 
 /// @brief Compares two strings for equality.
 /// @param str1 Pointer to the first slc_String.
-/// @param str2 Pointer to the second slc_String.
-/// @return non-zero if their contents are identical, 0 otherwise.
-SLC_API_INLINE i32 slc_string_equals(const slc_String *str1,
-                                     const slc_String *str2) {
+SLC_API_INLINE bool slc_string_equals(const slc_String *str1,
+                                      const slc_String *str2) {
   if (str1 == str2)
-    return 1; // Same pointer
+    return true; // Same pointer
   if (!str1 || !str2)
-    return 0; // One is null
+    return false; // One is null
   if (str1->size != str2->size)
-    return 0;
+    return false;
   if (str1->size == 0)
-    return 1; // Both are empty
+    return true; // Both are empty
   return slc_memcmp(str1->data, str2->data, str1->size) == 0;
+}
+
+/// @brief Compares a slc_String with a null-terminated C string for equality.
+/// @param str Pointer to the slc_String.
+/// @param cstr Null-terminated C string to compare against.
+/// @return true if they are equal, false otherwise.
+SLC_API_INLINE bool slc_string_equals_cstr(const slc_String *str,
+                                           const char *cstr) {
+  if (!str || !cstr)
+    return false;
+
+  i32 cstr_len = slc_strlen(cstr);
+
+  if (str->size != cstr_len)
+    return false;
+  if (str->size == 0)
+    return true; // Both are empty strings
+
+  return slc_memcmp(str->data, cstr, str->size) == 0;
 }
 
 /// @brief Extracts a non-owning StringView from a string.
@@ -903,6 +958,12 @@ SLC_API_PUBLIC void slc_string_append_view(slc_String *str,
   }
 }
 
+/// @brief Appends another StringView to the string.
+SLC_API_PUBLIC void slc_string_append(slc_String *str1, slc_String *str2) {
+  slc_StringView str2_view = slc_string_view(str2);
+  slc_string_append_view(str1, str2_view);
+}
+
 /// @brief Clears the string, setting its size to 0.
 SLC_API_PUBLIC void slc_string_clear(slc_String *str) {
   str->size = 0;
@@ -955,15 +1016,17 @@ SLC_API_PUBLIC LIBC_DEP void slc_cmd_exec(i32 argc, slc_String *cmd_args);
 /// to simplify argument handling.
 /// @param argc Number of arguments.
 /// @param argv Array of argument strings.
-SLC_API_PUBLIC void slc_cmd_exec(i32 argc, slc_String *cmd_args) {
+SLC_API_PUBLIC LIBC_DEP void slc_cmd_exec(i32 argc, slc_String *cmd_args) {
   if (!cmd_args || argc == 0) {
-    fprintf(stderr, "SLC_CMD Error: No command provided to execute.\n");
+    slc_stream_print(stderr,
+                     "SLC_CMD Error: No command provided to execute.\n");
     return;
   }
 
   pid_t pid = fork();
   if (pid == -1) {
-    fprintf(stderr, "SLC_CMD Error: fork() failed: %s\n", strerror(errno));
+    slc_stream_print(stderr, "SLC_CMD Error: fork() failed: %s\n",
+                     strerror(errno));
     return;
   }
 
@@ -992,8 +1055,8 @@ SLC_API_PUBLIC void slc_cmd_exec(i32 argc, slc_String *cmd_args) {
     execvp(exec_argv.data[0], exec_argv.data);
 
     // If execvp returns, an error occurred.
-    fprintf(stderr, "SLC_CMD Error: execvp failed for '%s': %s\n",
-            exec_argv.data[0], strerror(errno));
+    slc_stream_print(stderr, "SLC_CMD Error: execvp failed for '%s': %s\n",
+                     exec_argv.data[0], strerror(errno));
     slc_mem_arena_free(arena_ptr);
     exit(127);
   }
@@ -1005,21 +1068,121 @@ SLC_API_PUBLIC void slc_cmd_exec(i32 argc, slc_String *cmd_args) {
   if (WIFEXITED(status)) {
     int exit_code = WEXITSTATUS(status);
     if (exit_code != 0) {
-      fprintf(stderr, "SLC_CMD Info: Command exited with non-zero code: %d\n",
-              exit_code);
+      slc_stream_print(stderr,
+                       "SLC_CMD Info: Command exited with non-zero code: %d\n",
+                       exit_code);
     }
   } else if (WIFSIGNALED(status)) {
     int signal_num = WTERMSIG(status);
-    fprintf(stderr, "SLC_CMD Error: Command terminated by signal: %d\n",
-            signal_num);
+    slc_stream_print(stderr,
+                     "SLC_CMD Error: Command terminated by signal: %d\n",
+                     signal_num);
   }
 }
-#endif // SLC_PLATFORM_LINUX
-#endif // SLC_CMD_IMPL
+#endif
 
 #ifdef SLC_PLATFORM_WINDOWS
+#include <stdio.h>
+#include <string.h>
+#include <windows.h>
 
+/// @brief Executes a command in a new process and waits for it to complete.
+/// This function is a reimplementation that uses the slc_String library
+/// to simplify argument handling.
+/// @param argc Number of arguments.
+/// @param argv Array of slc_String arguments.
+SLC_API_PUBLIC LIBC_DEP void slc_cmd_exec(i32 argc, slc_String *cmd_args) {
+  if (!cmd_args || argc == 0) {
+    slc_stream_print(stderr,
+                     "SLC_CMD Error: No command provided to execute.\n");
+    return;
+  }
+
+  slc_MemArena arena = {0};
+  slc_MemArena *arena_ptr = &arena;
+  slc_mem_arena_alloc_chunk(arena_ptr, SLC_CHUNK_DEFAULT_SIZE);
+
+  // --- Windows requires a single command-line string ---
+  // We must build one from the cmd_args array, quoting any arguments that
+  // contain spaces to ensure they are parsed correctly by the new process.
+
+  // 1. Calculate the total length needed for the final string.
+  size_t total_len = 0;
+  for (i32 i = 0; i < argc; i++) {
+    total_len += cmd_args[i].size;
+    if (strchr(cmd_args[i].data, ' ')) {
+      total_len += 2; // For quotes ""
+    }
+  }
+  if (argc > 1) {
+    total_len += (size_t)argc - 1; // For spaces between arguments
+  }
+  total_len += 1; // For the null terminator
+
+  // 2. Allocate and build the string. CreateProcessA requires a mutable buffer.
+  char *cmdline = slc_mem_arena_alloc(arena_ptr, total_len);
+  if (!cmdline) {
+    slc_stream_print(
+        stderr, "SLC_CMD Error: Failed to allocate memory for command line.\n");
+    slc_mem_arena_free(arena_ptr);
+    return;
+  }
+  cmdline[0] = '\0';
+
+  for (i32 i = 0; i < argc; i++) {
+    const char *arg_data = cmd_args[i].data;
+    if (strchr(arg_data, ' ')) {
+      strcat(cmdline, "\"");
+      strcat(cmdline, arg_data);
+      strcat(cmdline, "\"");
+    } else {
+      strcat(cmdline, arg_data);
+    }
+    if (i < argc - 1) {
+      strcat(cmdline, " ");
+    }
+  }
+
+  // Create and wait for the process
+  STARTUPINFOA si;
+  PROCESS_INFORMATION pi;
+  ZeroMemory(&si, sizeof(si));
+  si.cb = sizeof(si);
+  ZeroMemory(&pi, sizeof(pi));
+
+  if (!CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si,
+                      &pi)) {
+    DWORD ec = GetLastError();
+    slc_stream_print(
+        stderr, "SLC_CMD Error: CreateProcessA failed (code %lu) for '%s'\n",
+        ec, cmdline);
+    slc_mem_arena_free(arena_ptr);
+    return;
+  }
+
+  // Wait for the child process to complete.
+  WaitForSingleObject(pi.hProcess, INFINITE);
+
+  DWORD exit_code = 0;
+  if (!GetExitCodeProcess(pi.hProcess, &exit_code)) {
+    slc_stream_print(
+        stderr, "SLC_CMD Error: Could not get process exit code (err %lu)\n",
+        GetLastError());
+  } else if (exit_code != 0) {
+    slc_stream_print(stderr,
+                     "SLC_CMD Info: Command exited with non-zero code: %lu\n",
+                     exit_code);
+  }
+
+  // Clean up process handles and memory.
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+  slc_mem_arena_free(arena_ptr);
+}
 #endif
+
+#endif // SLC_CMD_IMPL
+#endif // SLC_LIBRARY_H
 
 /*
 

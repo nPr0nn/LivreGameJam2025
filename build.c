@@ -9,7 +9,12 @@ void build_vendors(String target_folder_path, bool build_to_web,
                    MemArena *arena_ptr) {
 
   String raylib_folder_path = string_from_cstr("./vendor/raylib/", arena_ptr);
-  String c_compiler = string_from_cstr("gcc", arena_ptr);
+
+  String compiler_name;
+  if (build_to_web)
+    compiler_name = string_from_cstr("emcc", arena_ptr);
+  else
+    compiler_name = string_from_cstr("gcc", arena_ptr);
 
   String raylib_modules[] = {
       string_from_cstr("rcore", arena_ptr),
@@ -19,9 +24,13 @@ void build_vendors(String target_folder_path, bool build_to_web,
       string_from_cstr("rtext", arena_ptr),
       string_from_cstr("rtextures", arena_ptr),
       string_from_cstr("utils", arena_ptr),
+
+      //  string_from_cstr("rglfw", arena_ptr)
   };
   int num_raylib_modules = stack_array_size(raylib_modules);
 
+  String *flags_list;
+  i32 flags_count = -1;
   String desktop_flags_list[] = {
       string_from_cstr("-Wall", arena_ptr),
       string_from_cstr("-D_GNU_SOURCE", arena_ptr),
@@ -34,8 +43,26 @@ void build_vendors(String target_folder_path, bool build_to_web,
       string_from_cstr("-fPIC", arena_ptr),
       string_from_cstr("-O2", arena_ptr),
       string_from_cstr("-Werror=implicit-function-declaration", arena_ptr),
+      // string_from_cstr("-D_GLFW_X11", arena_ptr),
+      // string_from_cstr("-I.", arena_ptr),
+      // string_from_cstr("-Ivendor/raylib/external/glfw/include", arena_ptr)
   };
-  int num_desktop_flags_list = stack_array_size(desktop_flags_list);
+  i32 desktop_flags_count = stack_array_size(desktop_flags_list);
+
+  String web_flags_list[] = {
+      string_from_cstr("-Wall", arena_ptr),
+      string_from_cstr("-DPLATFORM_WEB_RGFW", arena_ptr),
+      string_from_cstr("-DGRAPHICS_API_OPENGL_ES2", arena_ptr),
+  };
+  i32 web_flags_count = stack_array_size(web_flags_list);
+
+  if (build_to_web) {
+    flags_list = web_flags_list;
+    flags_count = web_flags_count;
+  } else {
+    flags_list = desktop_flags_list;
+    flags_count = desktop_flags_count;
+  }
 
   // Array to store the paths of all generated object files.
   DynamicArray(String) object_files =
@@ -46,11 +73,11 @@ void build_vendors(String target_folder_path, bool build_to_web,
     DynamicArray(String) args = dynamic_array_create(String, 32, arena_ptr);
 
     // 1. Add the compiler command
-    dynamic_array_push_back(&args, c_compiler);
+    dynamic_array_push_back(&args, compiler_name);
 
     // 2. Add all the compiler flags, each as a separate argument
-    for (int j = 0; j < num_desktop_flags_list; j++) {
-      dynamic_array_push_back(&args, desktop_flags_list[j]);
+    for (int j = 0; j < flags_count; j++) {
+      dynamic_array_push_back(&args, flags_list[j]);
     }
 
     // 3. Add the "-c" flag
@@ -59,7 +86,7 @@ void build_vendors(String target_folder_path, bool build_to_web,
     // 4. Build and add the source file path
     String source_file =
         string_from_view(string_view(&raylib_folder_path), arena_ptr);
-    string_append_view(&source_file, string_view(&raylib_modules[i]));
+    string_append(&source_file, &raylib_modules[i]);
     string_append_cstr(&source_file, ".c");
     dynamic_array_push_back(&args, source_file);
 
@@ -69,25 +96,25 @@ void build_vendors(String target_folder_path, bool build_to_web,
     // 6. Build and add the object file path
     String object_file =
         string_from_view(string_view(&target_folder_path), arena_ptr);
-    string_append_view(&object_file, string_view(&raylib_modules[i]));
+    string_append(&object_file, &raylib_modules[i]);
     string_append_cstr(&object_file, ".o");
     dynamic_array_push_back(&args, object_file);
 
     // Keep track of the object file for the final linking step.
     dynamic_array_push_back(&object_files, object_file);
 
-    printf("Executing command: ");
+    print("Executing command: ");
     for (size_t k = 0; k < args.size; k++) {
-      printf("%s ", args.data[k].data);
+      print("%s ", args.data[k].data);
     }
-    printf("\n");
+    print("\n");
 
     // 7. Execute the command
     cmd_exec(args.size, args.data);
   }
 
   // After compiling all modules, link them into a static library.
-  printf("Linking static library libraylib.a...\n");
+  print("Linking static library libraylib.a...\n");
 
   DynamicArray(String) ar_args = dynamic_array_create(String, 32, arena_ptr);
 
@@ -108,24 +135,29 @@ void build_vendors(String target_folder_path, bool build_to_web,
     dynamic_array_push_back(&ar_args, object_files.data[i]);
   }
 
-  printf("Executing command: ");
+  print("Executing command: ");
   for (size_t k = 0; k < ar_args.size; k++) {
-    printf("%s ", ar_args.data[k].data);
+    print("%s ", ar_args.data[k].data);
   }
-  printf("\n");
+  print("\n");
 
   // 5. Execute the linking command
   cmd_exec(ar_args.size, ar_args.data);
 }
 
-void build_game(String build_folder_path, bool build_to_web,
+void build_game(String build_folder_path, String exec_name, bool build_to_web,
                 MemArena *arena_ptr) {
-  printf("Building game executable...\n");
+  print("Building game executable...\n");
 
   DynamicArray(String) args = dynamic_array_create(String, 32, arena_ptr);
 
   // 1. Compiler
-  dynamic_array_push_back(&args, string_from_cstr("gcc", arena_ptr));
+  String compiler_name;
+  if (build_to_web)
+    compiler_name = string_from_cstr("emcc", arena_ptr);
+  else
+    compiler_name = string_from_cstr("gcc", arena_ptr);
+  dynamic_array_push_back(&args, compiler_name);
 
   // 2. Flags
   dynamic_array_push_back(&args, string_from_cstr("-std=c99", arena_ptr));
@@ -134,16 +166,17 @@ void build_game(String build_folder_path, bool build_to_web,
   // 3. Output file
   String output_file =
       string_from_view(string_view(&build_folder_path), arena_ptr);
-  string_append_cstr(&output_file, "game");
+  string_append_view(&output_file, string_view(&exec_name));
   dynamic_array_push_back(&args, string_from_cstr("-o", arena_ptr));
   dynamic_array_push_back(&args, output_file);
 
-  // 4. Source file
+  // 4. Source files
   dynamic_array_push_back(&args, string_from_cstr("src/main.c", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("src/game.c", arena_ptr));
 
   // 5. Library Path
   String lib_path = string_from_cstr("-L", arena_ptr);
-  string_append_view(&lib_path, string_view(&build_folder_path));
+  string_append(&lib_path, &build_folder_path);
   dynamic_array_push_back(&args, lib_path);
 
   // 6. Libraries to link
@@ -156,45 +189,108 @@ void build_game(String build_folder_path, bool build_to_web,
   dynamic_array_push_back(&args, string_from_cstr("-lXrandr", arena_ptr));
   dynamic_array_push_back(&args, string_from_cstr("-lGL", arena_ptr));
 
-  printf("Executing command: ");
+  print("Executing command: ");
   for (size_t k = 0; k < args.size; k++) {
-    printf("%s ", args.data[k].data);
+    print("%s ", args.data[k].data);
   }
-  printf("\n");
+  print("\n");
 
-  // Execute the final compilation command
   cmd_exec(args.size, args.data);
 }
 
-int main(int argc, char **argv) {
-  if (argc < 2) {
-    fprintf(stderr, "Usage: %s <command> [options]\n", argv[0]);
-    fprintf(stderr, "Commands:\n");
-    fprintf(stderr, "  vendors [web]   - Build vendor libraries\n");
-    fprintf(stderr, "  game    [web]   - Build the game executable\n");
-    return 1;
+void run_game(String build_folder_path, String exec_name, bool build_to_web,
+              MemArena *arena_ptr) {
+  if (!build_to_web) {
+    String command = string_create(arena_ptr);
+    string_append_cstr(&command, "./");
+    string_append(&command, &build_folder_path);
+    string_append(&command, &exec_name);
+    cmd_exec(1, &command);
   }
+}
 
+void help(const String *binary_name) {
+  stream_print(stderr, "Usage: %s <command> [options]\n", binary_name->data);
+  stream_print(stderr, "Commands:\n");
+  stream_print(stderr, "  vendors [web] - Build vendor libraries\n");
+  stream_print(stderr, "  game    [web] [run] - Build the game executable\n");
+}
+
+int main(int argc, char **argv) {
   MemArena arena = {0};
   MemArena *arena_ptr = &arena;
 
-  const char *command = argv[1];
-  bool build_to_web = false;
-
-  if (argc > 2 && strcmp(argv[2], "web") == 0) {
-    build_to_web = true;
+  if (argc < 1) {
+    stream_print(stderr, "Internal error: no argv[0]\n");
+    return 1;
   }
 
-  String build_folder = string_from_cstr("target/", arena_ptr);
-
-  if (strcmp(command, "vendors") == 0) {
-    build_vendors(build_folder, build_to_web, arena_ptr);
-  } else if (strcmp(command, "game") == 0) {
-    build_game(build_folder, build_to_web, arena_ptr);
-  } else {
-    fprintf(stderr, "Unknown command: %s\n", command);
+  String binary_name = string_from_cstr(argv[0], arena_ptr);
+  if (argc < 2) {
+    help(&binary_name);
     mem_arena_free(&arena);
     return 1;
+  }
+
+  String build_target = string_from_cstr(argv[1], arena_ptr);
+  String build_folder = string_from_cstr("target/", arena_ptr);
+  String executable_name = string_from_cstr("app", arena_ptr);
+
+  bool should_build_vendors = string_equals_cstr(&build_target, "vendors");
+  bool should_build_game = string_equals_cstr(&build_target, "game");
+
+  bool build_to_web = false;
+  bool should_run_game = false;
+
+  // Handle first optional argument
+  if (argc > 2) {
+    String second_argument = string_from_cstr(argv[2], arena_ptr);
+    if (string_equals_cstr(&second_argument, "web")) {
+      build_to_web = true;
+    } else if (string_equals_cstr(&second_argument, "run")) {
+      should_run_game = true;
+    } else {
+      stream_print(stderr, "Unknown option: %s\n", second_argument.data);
+      mem_arena_free(&arena);
+      return 1;
+    }
+  }
+
+  // Update the build folder
+  if (build_to_web) {
+    string_append_cstr(&build_folder, "web/");
+  } else {
+    string_append_cstr(&build_folder, "desktop/");
+  }
+
+  // Run Game after build
+  if (argc > 3 && should_build_game) {
+    String third_argument = string_from_cstr(argv[3], arena_ptr);
+    if (string_equals_cstr(&third_argument, "run")) {
+      should_run_game = true;
+    } else {
+      stream_print(stderr, "Unknown option: %s\n", third_argument.data);
+      mem_arena_free(&arena);
+      return 1;
+    }
+  }
+
+  if (should_build_vendors) {
+    stream_print(stdout, "[BUILD] Vendors -> %s (%s)\n", build_folder.data,
+                 build_to_web ? "Web" : "Native");
+    build_vendors(build_folder, build_to_web, arena_ptr);
+  } else if (should_build_game) {
+    stream_print(stdout, "[BUILD] Game -> %s (%s)\n", build_folder.data,
+                 build_to_web ? "Web" : "Native");
+    build_game(build_folder, executable_name, build_to_web, arena_ptr);
+    if (should_run_game) {
+      stream_print(stdout, "[RUN] Launching game...\n");
+      run_game(build_folder, executable_name, build_to_web, arena_ptr);
+    }
+
+  } else {
+    stream_print(stderr, "Unknown command: %s\n", build_target.data);
+    help(&binary_name);
   }
 
   mem_arena_free(&arena);
