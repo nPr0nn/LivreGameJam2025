@@ -23,6 +23,7 @@ void game_draw(void *ctx) {
   GameContext *g = (GameContext *)ctx;
 
   BeginDrawing();
+  ClearBackground(BLACK);
 
   BeginMode2D(g->camera);
   DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
