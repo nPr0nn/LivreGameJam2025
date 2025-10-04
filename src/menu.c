@@ -42,6 +42,7 @@ int detect_click(Button *self, Vector2 screen_dim, Vector2 window_dim)
     Vector2 mousePoint = GetMousePosition();
     mousePoint.x = (mousePoint.x/window_dim.x) * screen_dim.x;
     mousePoint.y = (mousePoint.y/window_dim.y) * screen_dim.y;
+
     return (CheckCollisionPointRec(mousePoint, self->rec) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
 }
 
@@ -60,8 +61,8 @@ DrawRectangleRounded(rec, 0.05, 1, (Color){100,100,100,230});
     }
 
 // Draw pause message if paused
-DrawText("Game Paused", self->screen_dim.x/2, self->screen_dim.y*0.9, 10, RED);
-DrawText("Press P to Resume", self->screen_dim.x/2, self->screen_dim.y*0.9, 10, LIGHTGRAY);
+DrawText("Game Paused", self->screen_dim.x/2-30, self->screen_dim.y-30, 10, RED);
+DrawText("Press P to Resume", self->screen_dim.x/2-30-15, self->screen_dim.y-20, 10, LIGHTGRAY);
 
 
 }
