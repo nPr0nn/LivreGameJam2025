@@ -23,39 +23,39 @@ void character_read_input(Character *ch, bool is_paused) {
     ch->acc.x += move_acc;
 
   // Jump
-  if (IsKeyPressed(KEY_SPACE) && ch->pos.y == 0) {
-    ch->vel.y = -300.0f;
+  if (IsKeyPressed(KEY_SPACE) && ch->pos.y == 0 && !is_paused) {
+    ch->vel.y += -300.0f;
   } else if (IsKeyPressed(KEY_SPACE) && is_paused && ch->pos.y == 0) {
-    ch->vel.y -= 100.0f;
+    ch->vel.y += -200.0f;
 }
 
 }
 
 void character_update(Character *ch, float dt, bool is_paused) {
-    if(!is_paused) {
+    float gravity = 800.0f; // px/s²
+    float friction = 6.0f; // per second — not per frame!
 
+    if(!is_paused) {
         // ✅ Gravity
-        float gravity = 800.0f; // px/s²
         ch->acc.y += gravity;
         
-        // ✅ Integrate velocity
-        ch->vel.x += ch->acc.x * dt;
-        ch->vel.y += ch->acc.y * dt;
-        
         // ✅ Apply horizontal damping (friction)
-        float friction = 6.0f; // per second — not per frame!
         ch->vel.x -= ch->vel.x * friction * dt;
         
         // ✅ Integrate position
         ch->pos.x += ch->vel.x * dt;
         ch->pos.y += ch->vel.y * dt;
     }
+    
+    // ✅ Integrate velocity
+    ch->vel.x += ch->acc.x * dt;
+    ch->vel.y += ch->acc.y * dt;
         
-        // ✅ Ground collision
-        if (ch->pos.y > 0) {
-            ch->pos.y = 0;
-            ch->vel.y = 0;
-        }
+    // ✅ Ground collision
+    if (ch->pos.y > 0) {
+        ch->pos.y = 0;
+        ch->vel.y = 0;
+    }
         
 }
 

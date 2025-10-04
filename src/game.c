@@ -47,7 +47,7 @@ void game_init(void *ctx) {
       (Camera2D){.target = (Vector2){0, 0},
                  .offset = (Vector2){target_width / 2.0f, target_height / 2.0f},
                  .rotation = 0.0f,
-                 .zoom = 1.0f};
+                 .zoom = 0.3f};
   g->pos = (Vector2){0, 0};
   g->is_paused = false; // Initialize paused state to false
   character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
@@ -117,6 +117,7 @@ void game_update(void *ctx) {
 
   // Skip game updates if paused
   if (g->is_paused) {
+    character_read_input(&g->player, g->is_paused);
     character_update(&g->player, g->dt,  g->is_paused);
     return;
   }
@@ -127,7 +128,7 @@ void game_update(void *ctx) {
   Vector2 screen_mouse_pos = GetMousePosition();
   g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
   g->camera.target = g->pos;
-  character_read_input(&g->player);
+  character_read_input(&g->player, g->is_paused);
   character_update(&g->player, g->dt, g->is_paused);
 }
 
