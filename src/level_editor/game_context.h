@@ -30,6 +30,15 @@ typedef struct GameContext {
   int click_count;
   int edit_mode; // 0 = single-tile place, 1 = rectangle place (two clicks)
   int pending_action; // 0 = none, 1 = place, -1 = erase (for rectangle mode)
+  int save_flash_counter; // frames to show "saved" message
+  // Collision layer: support types and IDs
+  // collision_type: 0 = none, 1 = solid, 2 = death, 3 = trigger
+  int collision_type[MAP_W][MAP_H];
+  // collision_id: integer id for triggers (only meaningful when collision_type==3)
+  int collision_id[MAP_W][MAP_H];
+  int active_layer; // 0 = tiles, 1 = collision
+  int collision_visible; // 0 = hidden, 1 = visible
+  int current_collision_type; // 1=solid,2=death,3=trigger (used when editing collision layer)
 
   // Map
   int map[MAP_W][MAP_H]; // -1 if empty, otherwise index of tile

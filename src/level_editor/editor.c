@@ -3,6 +3,14 @@
 #include "game_context.h"
 #include "utils.h"
 
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
+
 #define MAX_EDITOR_OPTIONS 10
 
 void game_init(void *ctx) {
@@ -23,6 +31,7 @@ void game_init(void *ctx) {
   g->click_count = 0;
   g->edit_mode = 0; // start in single-tile mode
   g->pending_action = 0;
+  g->save_flash_counter = 0;
 
   // Load tiles
   for (int i = 0; i < NUM_TILES; i++) {
@@ -35,8 +44,13 @@ void game_init(void *ctx) {
   for (int x = 0; x < MAP_W; x++) {
     for (int y = 0; y < MAP_H; y++) {
       g->map[x][y] = -1; // -1 indicates empty tile
+      g->collision_type[x][y] = 0; // none
+      g->collision_id[x][y] = 0;
     }
   }
+  g->active_layer = 0; // start editing tiles layer
+  g->collision_visible = 0;
+  g->current_collision_type = 1; // default: solid
   
   g->camera = (Camera2D){{0, 0}, {0, 0}, 0.0, 1.0};
   g->pos = (Vector2){0, 0};
@@ -76,6 +90,32 @@ void game_draw(void *ctx) {
     }
   }
 
+  // Draw collision overlay if visible
+  if (g->collision_visible) {
+    for (int x = 0; x < MAP_W; x++) {
+      for (int y = 0; y < MAP_H; y++) {
+        int ct = g->collision_type[x][y];
+        if (ct != 0) {
+          Rectangle r = (Rectangle){x * TILE_SIZE, y * TILE_SIZE, (float)TILE_SIZE, (float)TILE_SIZE};
+          if (ct == 1) { // solid
+            DrawRectangleRec(r, (Color){255, 0, 0, 80});
+            DrawRectangleLinesEx(r, 1, RED);
+          } else if (ct == 2) { // death
+            DrawRectangleRec(r, (Color){128, 0, 128, 80});
+            DrawRectangleLinesEx(r, 1, PURPLE);
+          } else if (ct == 3) { // trigger
+            DrawRectangleRec(r, (Color){0, 128, 255, 80});
+            DrawRectangleLinesEx(r, 1, BLUE);
+            // draw trigger id
+            char idbuf[8];
+            snprintf(idbuf, sizeof(idbuf), "%d", g->collision_id[x][y]);
+            DrawText(idbuf, x * TILE_SIZE + 4, y * TILE_SIZE + 4, 10, WHITE);
+          }
+        }
+      }
+    }
+  }
+
   // If in rectangle mode and we have one click, draw preview rectangle between first click and current mouse
   if (g->edit_mode == 1 && g->click_count == 1) {
     Vector2 p = g->click_points[0];
@@ -107,7 +147,19 @@ void game_draw(void *ctx) {
                                center_y - (TILE_SIZE / 2.0f),
                                (float)TILE_SIZE,
                                (float)TILE_SIZE};
-  DrawTexturePro(tex, src, dest, (Vector2){0, 0}, 0.0f, WHITE);
+  // Draw semi-transparent preview for selected tile
+  // Draw semi-transparent preview for selected tile or collision cell
+  if (g->active_layer == 0) {
+    Color preview_tint = (Color){255, 255, 255, 180};
+    DrawTexturePro(tex, src, dest, (Vector2){0, 0}, 0.0f, preview_tint);
+  } else {
+    // collision preview
+    Rectangle pr = (Rectangle){center_x - (TILE_SIZE/2.0f), center_y - (TILE_SIZE/2.0f), (float)TILE_SIZE, (float)TILE_SIZE};
+    if (g->current_collision_type == 1) DrawRectangleRec(pr, (Color){255, 0, 0, 120});
+    else if (g->current_collision_type == 2) DrawRectangleRec(pr, (Color){128, 0, 128, 120});
+    else if (g->current_collision_type == 3) DrawRectangleRec(pr, (Color){0, 128, 255, 120});
+    DrawRectangleLinesEx(pr, 1, BLACK);
+  }
 
   EndMode2D();
 
@@ -122,6 +174,30 @@ void game_draw(void *ctx) {
       snprintf(mode_buf, sizeof(mode_buf), "Mode: Rectangle (press M to toggle)");
   }
   DrawText(mode_buf, 10, 10, 20, WHITE);
+
+  if (g->save_flash_counter > 0) {
+    DrawText("Map saved to assets/maps/map.json", 10, 36, 18, YELLOW);
+  }
+
+  // Active layer HUD
+  char layer_buf[64];
+  if (g->active_layer == 0) snprintf(layer_buf, sizeof(layer_buf), "Layer: Tiles (TAB to switch)");
+  else snprintf(layer_buf, sizeof(layer_buf), "Layer: Collision (TAB to switch)");
+  DrawText(layer_buf, 10, 60, 18, WHITE);
+
+  char vis_buf[64];
+  snprintf(vis_buf, sizeof(vis_buf), "Collision overlay: %s (press L)", g->collision_visible ? "Visible" : "Hidden");
+  DrawText(vis_buf, 10, 80, 16, LIGHTGRAY);
+
+  if (g->active_layer == 1) {
+    char ctype_buf[64];
+    const char *ctname = "";
+    if (g->current_collision_type == 1) ctname = "Solid";
+    else if (g->current_collision_type == 2) ctname = "Death";
+    else if (g->current_collision_type == 3) ctname = "Trigger";
+    snprintf(ctype_buf, sizeof(ctype_buf), "Collision type: %s (Z=Solid, C=Death, X=Trigger, tile ID -> trigger ID)", ctname);
+    DrawText(ctype_buf, 10, 100, 14, LIGHTGRAY);
+  }
 
   EndDrawing();
 }
@@ -163,8 +239,13 @@ void game_update(void *ctx) {
     if (tile_y >= MAP_H) tile_y = MAP_H - 1;
 
     if (g->edit_mode == 0) {
-      // single-tile erase
-      g->map[tile_x][tile_y] = -1;
+      // single-tile erase or collision toggle
+      if (g->active_layer == 0) {
+        g->map[tile_x][tile_y] = -1;
+      } else {
+        g->collision_type[tile_x][tile_y] = 0;
+        g->collision_id[tile_x][tile_y] = 0;
+      }
     } else {
       // rectangle erase uses same two-click flow but with pending_action = -1
       if (g->click_count == 0) {
@@ -172,7 +253,7 @@ void game_update(void *ctx) {
         g->click_count = 1;
         g->pending_action = -1;
       } else {
-        // second click: erase rectangle
+        // second click: erase rectangle or clear collision rectangle
         int x0 = (int)g->click_points[0].x;
         int y0 = (int)g->click_points[0].y;
         int x1 = tile_x;
@@ -184,7 +265,8 @@ void game_update(void *ctx) {
         for (int x = sx; x <= ex; x++) {
           for (int y = sy; y <= ey; y++) {
             if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) {
-              g->map[x][y] = -1;
+              if (g->active_layer == 0) g->map[x][y] = -1;
+              else { g->collision_type[x][y] = 0; g->collision_id[x][y] = 0; }
             }
           }
         }
@@ -204,8 +286,12 @@ void game_update(void *ctx) {
     if (tile_y >= MAP_H) tile_y = MAP_H - 1;
 
     if (g->edit_mode == 0) {
-      // single-tile placement
-      g->map[tile_x][tile_y] = g->selected_tile;
+      // single-tile placement or collision set
+      if (g->active_layer == 0) g->map[tile_x][tile_y] = g->selected_tile;
+      else {
+        g->collision_type[tile_x][tile_y] = g->current_collision_type;
+        if (g->current_collision_type == 3) g->collision_id[tile_x][tile_y] = g->selected_tile; // use selected tile as trigger id
+      }
     } else {
       // rectangle mode: store clicks and on second click fill rectangle
       if (g->click_count == 0) {
@@ -226,7 +312,8 @@ void game_update(void *ctx) {
         for (int x = sx; x <= ex; x++) {
           for (int y = sy; y <= ey; y++) {
             if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) {
-              g->map[x][y] = g->selected_tile;
+              if (g->active_layer == 0) g->map[x][y] = g->selected_tile;
+              else { g->collision_type[x][y] = g->current_collision_type; if (g->current_collision_type == 3) g->collision_id[x][y] = g->selected_tile; }
             }
           }
         }
@@ -243,6 +330,124 @@ void game_update(void *ctx) {
     g->click_count = 0;
     g->pending_action = 0;
   }
+
+  // Switch active layer
+  if (IsKeyPressed(KEY_TAB)) {
+    g->active_layer = (g->active_layer == 0) ? 1 : 0;
+    g->click_count = 0;
+    g->pending_action = 0;
+  }
+
+  // Toggle collision visibility
+  if (IsKeyPressed(KEY_L)) {
+    g->collision_visible = (g->collision_visible == 0) ? 1 : 0;
+  }
+
+  // Change current collision type
+  if (IsKeyPressed(KEY_Z)) g->current_collision_type = 1; // solid
+  if (IsKeyPressed(KEY_X)) g->current_collision_type = 3; // trigger
+  if (IsKeyPressed(KEY_C)) g->current_collision_type = 2; // death
+
+  // Save map to JSON
+  if (IsKeyPressed(KEY_F5)) {
+    // ensure directory exists
+    const char *dir = "assets/maps";
+    // try to create directory (POSIX)
+    struct stat st = {0};
+    if (stat(dir, &st) == -1) {
+      // create directory with 0755
+      #ifdef _WIN32
+        _mkdir(dir);
+      #else
+        mkdir(dir, 0755);
+      #endif
+    }
+
+    const char *path = "assets/maps/map.json";
+    FILE *f = fopen(path, "w");
+    if (f) {
+      // Write header
+      fprintf(f, "{\"map_w\": %d, \"map_h\": %d,\n", MAP_W, MAP_H);
+
+      // Tiles: write as list of rectangles {tile,x,y,w,h}
+      fprintf(f, "\"tiles\": [\n");
+      int visited[MAP_W][MAP_H];
+      memset(visited, 0, sizeof(visited));
+      int first = 1;
+      for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+          if (visited[x][y]) continue;
+          int v = g->map[x][y];
+          if (v < 0) continue;
+          // expand width
+          int w = 1;
+          while (x + w < MAP_W) {
+            int ok = 1;
+            if (g->map[x + w][y] != v) ok = 0;
+            if (!ok) break;
+            w++;
+          }
+          // expand height while all rows match
+          int h = 1;
+          while (y + h < MAP_H) {
+            int ok = 1;
+            for (int xi = x; xi < x + w; xi++) {
+              if (g->map[xi][y + h] != v) { ok = 0; break; }
+            }
+            if (!ok) break;
+            h++;
+          }
+          // mark visited
+          for (int yy = y; yy < y + h; yy++) for (int xx = x; xx < x + w; xx++) visited[xx][yy] = 1;
+          if (!first) fprintf(f, ",\n");
+          fprintf(f, "  {\"tile\": %d, \"x\": %d, \"y\": %d, \"w\": %d, \"h\": %d}", v, x, y, w, h);
+          first = 0;
+        }
+      }
+      fprintf(f, "\n],\n");
+
+      // Collisions: write list of rectangles {type,id,x,y,w,h}
+      fprintf(f, "\"collisions\": [\n");
+      memset(visited, 0, sizeof(visited));
+      first = 1;
+      for (int y = 0; y < MAP_H; y++) {
+        for (int x = 0; x < MAP_W; x++) {
+          if (visited[x][y]) continue;
+          int ct = g->collision_type[x][y];
+          int cid = g->collision_id[x][y];
+          if (ct == 0) continue;
+          // expand width where both type and id match
+          int w = 1;
+          while (x + w < MAP_W) {
+            int ok = 1;
+            if (g->collision_type[x + w][y] != ct) ok = 0;
+            if (g->collision_id[x + w][y] != cid) ok = 0;
+            if (!ok) break;
+            w++;
+          }
+          int h = 1;
+          while (y + h < MAP_H) {
+            int ok = 1;
+            for (int xi = x; xi < x + w; xi++) {
+              if (g->collision_type[xi][y + h] != ct) { ok = 0; break; }
+              if (g->collision_id[xi][y + h] != cid) { ok = 0; break; }
+            }
+            if (!ok) break;
+            h++;
+          }
+          for (int yy = y; yy < y + h; yy++) for (int xx = x; xx < x + w; xx++) visited[xx][yy] = 1;
+          if (!first) fprintf(f, ",\n");
+          fprintf(f, "  {\"type\": %d, \"id\": %d, \"x\": %d, \"y\": %d, \"w\": %d, \"h\": %d}", ct, cid, x, y, w, h);
+          first = 0;
+        }
+      }
+      fprintf(f, "\n]\n}\n");
+      fclose(f);
+      g->save_flash_counter = 120; // show message for ~2 seconds at 60fps
+    }
+  }
+
+  if (g->save_flash_counter > 0) g->save_flash_counter--;
 
   // Other stuff
   Vector2 screen_mouse_pos = GetMousePosition();
