@@ -3,6 +3,8 @@
         "game_context.h": "c",
         "character.h": "c",
         "raylib.h": "c",
-        "game.h": "c"
+        "game.h": "c",
+        "array": "c",
+        "__tuple": "c"
     }
 }
