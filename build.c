@@ -15,16 +15,17 @@ void build_vendors(String target_folder_path, bool build_to_web,
   else
     compiler_name = string_from_cstr("gcc", arena_ptr);
 
-  String raylib_modules[] = {string_from_cstr("rcore", arena_ptr),
-                             string_from_cstr("raudio", arena_ptr),
-                             string_from_cstr("rshapes", arena_ptr),
-                             // string_from_cstr("rmodels", arena_ptr),
-                             string_from_cstr("rtext", arena_ptr),
-                             string_from_cstr("rtextures", arena_ptr),
-                             string_from_cstr("utils", arena_ptr),
+  String raylib_modules[] = {
+      string_from_cstr("rcore", arena_ptr),
+      string_from_cstr("raudio", arena_ptr),
+      string_from_cstr("rshapes", arena_ptr),
+      // string_from_cstr("rmodels", arena_ptr),
+      string_from_cstr("rtext", arena_ptr),
+      string_from_cstr("rtextures", arena_ptr),
+      string_from_cstr("utils", arena_ptr),
 
-                            //  string_from_cstr("rglfw", arena_ptr)
-                            };
+      //  string_from_cstr("rglfw", arena_ptr)
+  };
   i32 num_raylib_modules = stack_array_size(raylib_modules);
 
   String *flags_list;
@@ -44,7 +45,7 @@ void build_vendors(String target_folder_path, bool build_to_web,
       // string_from_cstr("-D_GLFW_X11", arena_ptr),
       // string_from_cstr("-I.", arena_ptr),
       // string_from_cstr("-Ivendor/raylib/external/glfw/include", arena_ptr)
-      };
+  };
   i32 desktop_flags_count = stack_array_size(desktop_flags_list);
 
   String web_flags_list[] = {
@@ -169,13 +170,24 @@ void build_game(String build_folder_path, String exec_name, bool build_to_web,
         string_from_cstr("target/web/libraylib.a", arena_ptr),
 
         string_from_cstr("-s", arena_ptr),
-        string_from_cstr("USE_GLFW=3", arena_ptr),
+        // string_from_cstr("USE_GLFW=3", arena_ptr),
 
         string_from_cstr("-s", arena_ptr),
         string_from_cstr("FULL_ES2=1", arena_ptr),
 
+        // string_from_cstr("-s", arena_ptr),
+        // string_from_cstr("USE_WEBGL2=1", arena_ptr),
+
+        // string_from_cstr("-s", arena_ptr),
+        // string_from_cstr("USE_WASM=1", arena_ptr),
+
+        string_from_cstr("-s", arena_ptr),
+        string_from_cstr("ASYNCIFY", arena_ptr),
+
         string_from_cstr("-DPLATFORM_WEB", arena_ptr),
     };
+    cmd_exec(stack_array_size(args), args);
+
   } else {
     // --- Desktop build (gcc) ---
     String args[] = {
