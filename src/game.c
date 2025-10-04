@@ -2,6 +2,7 @@
 #include "character.h"
 #include "game_context.h"
 #include "utils.h"
+#include <stdio.h>
 
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
@@ -15,26 +16,15 @@ void game_init(void *ctx) {
   const i32 scaled_width = target_width * scale_factor;
   const i32 scaled_height = target_height * scale_factor;
 
-#ifndef PLATFORM_WEB
-  i32 current_monitor_id = GetCurrentMonitor();
-  f32 monitor_scale = 0.8f; // a bit larger by default
-  i32 monitor_width =
-      (i32)(monitor_scale * GetMonitorWidth(current_monitor_id));
-  i32 monitor_height =
-      (i32)(monitor_scale * GetMonitorHeight(current_monitor_id));
+  i32 monitor_width = 1080;
+  i32 monitor_height = 540;
 
-  // Make sure the window is at least as large as the scaled canvas
   if (monitor_width < scaled_width)
     monitor_width = scaled_width;
   if (monitor_height < scaled_height)
     monitor_height = scaled_height;
 
   InitWindow(monitor_width, monitor_height, "Livre GameJam");
-#else
-  i32 monitor_width = 960;
-  i32 monitor_height = 540;
-  InitWindow(monitor_width, monitor_height, "Livre GameJam");
-#endif
 
   // --- Create the low-res render texture ---
   g->screen = LoadRenderTexture(target_width, target_height);
@@ -50,8 +40,6 @@ void game_init(void *ctx) {
                  .zoom = 1.0f};
   g->pos = (Vector2){0, 0};
   character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
-
-  g->dt = 0;
 }
 
 void game_draw(void *ctx) {
@@ -80,7 +68,6 @@ void game_draw(void *ctx) {
   ClearBackground((Color){30, 30, 50, 255});
   BeginMode2D(g->camera);
   DrawInfiniteGrid(g->camera, 25, LIGHTGRAY);
-  DrawCircleV(g->world_mouse_pos, 10, RED);
   character_draw(&g->player);
   EndMode2D();
   DrawText("Congrats! You created your first window!", 10, 10, 10, LIGHTGRAY);
@@ -96,24 +83,19 @@ void game_draw(void *ctx) {
                              (float)scaled_height},
                  (Vector2){0, 0}, 0.0f, WHITE);
 
-  // DrawFPS(10, 10);
   EndDrawing();
 }
 
 void game_update(void *ctx) {
   GameContext *g = (GameContext *)ctx;
-  g->dt = GetFrameTime();
 
-  g->pos.x = g->player.pos.x;
-  g->pos.y = g->player.pos.y;
+  character_read_input(&g->player);
+  character_update(&g->player, GetFrameTime());
+
+  g->camera.target = g->player.pos;
 
   // Other stuf
   Vector2 screen_mouse_pos = GetMousePosition();
-
-  g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
-  g->camera.target = g->pos;
-  character_read_input(&g->player);
-  character_update(&g->player, g->dt);
 }
 
 void game_loop(void *ctx) {
