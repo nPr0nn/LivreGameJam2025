@@ -45,7 +45,7 @@ void game_init(void *ctx) {
   g->is_paused = false; // Initialize paused state to false
   character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
   enemy_init(&g->enemy, (Vector2){30, 0}, 30.0f); // Initialize enemy
-  menu_init(&g->menu, (Vector2){0.0,0.0});
+  menu_init(&g->menu, (Vector2){0.0,0.0}, (Vector2){target_width, target_height}, (Vector2){monitor_width, monitor_height});
 }
 
 void game_draw(void *ctx) {
@@ -78,7 +78,8 @@ void game_draw(void *ctx) {
   enemy_draw(&g->enemy);
 
   EndMode2D();
-  DrawText("Congrats! You created your first window!", 10, 10, 10, LIGHTGRAY);
+  menu_draw(&g->menu);
+  // DrawText("Congrats! You created your first window!", 10, 10, 10, LIGHTGRAY);
   EndTextureMode();
 
   // --- Draw to screen with vertical bars ---
@@ -96,7 +97,6 @@ void game_draw(void *ctx) {
     DrawText("Game Paused", 400, 300, 30, RED);
     DrawText("Press P to Resume", 380, 340, 20, LIGHTGRAY);
   }
-  menu_draw(&g->menu);
   EndDrawing();
 }
 

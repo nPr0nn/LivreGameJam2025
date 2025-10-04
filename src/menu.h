@@ -29,11 +29,13 @@ typedef struct {
     Vector2 pos;
     int n_buttons;
     Button buttons[100];
+    Vector2 screen_dim;
+    Vector2 window_dim;
 
 
 } Menu;
 
-void menu_init(Menu *self, Vector2 pos);
+void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim);
 void menu_update(Menu *self, GameContext *g);
 void menu_draw(Menu *self);
 

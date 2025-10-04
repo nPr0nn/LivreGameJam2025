@@ -12,24 +12,26 @@ Button button_init(int x, int y, int width, int height, char * text, int r, int 
 
 void button_draw(Button *self)
 {
-DrawRectangleRoundedLinesEx(self->rec, 0.1, 0, 10, (Color){255,255,255,255});
-DrawRectangleRounded(self->rec, 0.1, 10, self->color);
-DrawText(self->text, self->rec.x + self->rec.width/2 - MeasureText(self->text, 20)/2, self->rec.y + self->rec.height/2-self->text_size/2, self->text_size, LIGHTGRAY);
+DrawRectangleRoundedLinesEx(self->rec, 0.1, 0, 1, (Color){255,255,255,255});
+DrawRectangleRounded(self->rec, 0.1, 1, self->color);
+DrawText(self->text, self->rec.x + self->rec.width/2 - MeasureText(self->text, self->text_size)/2, self->rec.y + self->rec.height/2-self->text_size/2, self->text_size, LIGHTGRAY);
 
 }
 
-void menu_init(Menu *self, Vector2 pos)
+void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim)
 {
-    self->buttons[0] = button_init(GetScreenWidth()/2-50,50,100,50, "Olá mundo!", 255,255,255,255, 20, DUMMY);
-    self->buttons[1] = button_init(GetScreenWidth()/2-50,150,100,50, "Música!", 255,255,255,255, 20, MUSIC);
+    self->buttons[0] = button_init(screen_dim.x/2-20,10,40,15, "Olá mundo!", 255,255,255,255, 10, DUMMY);
+    self->buttons[1] = button_init(screen_dim.x/2-20,30,40,15, "Música!", 255,255,255,255, 10, MUSIC);
     self->n_buttons = 2;
+    self->screen_dim = screen_dim;
+    self->window_dim = window_dim;
 }
 
-int detect_click(Button *self)
+int detect_click(Button *self, Vector2 screen_dim, Vector2 window_dim)
 {
     Vector2 mousePoint = GetMousePosition();
-    // printf("pontes: %lf %lf\n", mousePoint.x, mousePoint.y);
-    
+    mousePoint.x = (mousePoint.x/window_dim.x) * screen_dim.x;
+    mousePoint.y = (mousePoint.y/window_dim.y) * screen_dim.y;
     return (CheckCollisionPointRec(mousePoint, self->rec) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
 }
 
@@ -37,10 +39,10 @@ int detect_click(Button *self)
 
 void menu_draw(Menu *self)
 {
-Rectangle rec = (Rectangle){10, 10, GetScreenWidth()-20,GetScreenHeight()-20};
+Rectangle rec = (Rectangle){0, 0, 160,144};
 Color color = (Color){255,255,255,255};
-DrawRectangleRoundedLinesEx(rec, 0.05, 0, 10, color);
-DrawRectangleRounded(rec, 0.05, 10, (Color){100,100,100,230});
+DrawRectangleRoundedLinesEx(rec, 0.05, 0, 1, color);
+DrawRectangleRounded(rec, 0.05, 1, (Color){100,100,100,230});
 
     for(int i = 0; i<self->n_buttons;i++)
     {
@@ -55,10 +57,10 @@ void menu_update(Menu *self, GameContext *g)
 {
     for(int i = 0; i<self->n_buttons;i++)
     {
-        if(detect_click(&self->buttons[i]))
+        if(detect_click(&self->buttons[i], self->screen_dim, self->window_dim))
         {
-            
-            printf("clique\n");
+
+            printf("%d\n", self->buttons[i].button_type);
         }
     }
 
