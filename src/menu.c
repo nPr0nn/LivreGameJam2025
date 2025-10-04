@@ -28,13 +28,25 @@ if(self->pressed)
 DrawTextureRec(self->sprite_sheet, (Rectangle){0,0,16,16}, (Vector2){self->rec.x, self->rec.y}, color);
 }
 
+void au_lib_init(Menu *self)
+{
+    self->au_lib = (Audios_library){0};
+    self->au_lib.background_music = LoadMusicStream("sounds/musica1.mp3");
+    self->au_lib.bolha = LoadSound("sounds/bolha.wav");
+
+
+
+}
+
 void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim)
 {
     self->buttons[0] = button_init(screen_dim.x/2-20,10,16,16, "", 255,255,255,255, 10, MUSIC, "images/sound.png");
-    self->buttons[1] = button_init(screen_dim.x/2-20,30,16,16, "", 255,255,255,255, 10, MUSIC, "images/musicnote.png");
+    self->buttons[1] = button_init(screen_dim.x/2-20,30,16,16, "", 255,255,255,255, 10, SOUND_EFFECTS, "images/musicnote.png");
     self->n_buttons = 2;
     self->screen_dim = screen_dim;
     self->window_dim = window_dim;
+    au_lib_init(self);
+    PlayMusicStream(self->au_lib.background_music);
 }
 
 int detect_click(Button *self, Vector2 screen_dim, Vector2 window_dim)
@@ -66,6 +78,35 @@ DrawText("Press P to Resume", self->screen_dim.x/2-30-15, self->screen_dim.y-20,
 
 }
 
+void define_all_sounds_volume(Menu *menu, float volume)
+{
+    SetSoundVolume(menu->au_lib.bolha, volume);
+
+}
+
+void action_button(Button *self, Menu *menu)
+{
+    switch (self->button_type)
+    {
+    case MUSIC:
+        if(self->pressed){PauseMusicStream(menu->au_lib.background_music);}
+        else{ResumeMusicStream(menu->au_lib.background_music);}
+        
+        // float volume = 1.0f;
+        // if(self->pressed){volume=0.f;}
+        // SetMusicVolume(menu->background_music, volume);
+        break;
+    case SOUND_EFFECTS:
+        if(self->pressed){define_all_sounds_volume(menu,0.0f);}
+        else{define_all_sounds_volume(menu, 1.0f);}
+        
+        break;
+    default:
+        break;
+    }
+
+
+}
 
 void menu_update(Menu *self, GameContext *g)
 {
@@ -73,9 +114,10 @@ void menu_update(Menu *self, GameContext *g)
     {
         if(detect_click(&self->buttons[i], self->screen_dim, self->window_dim))
         {
-            PlaySound(LoadSound("sounds/bolha.wav"));
+            PlaySound(self->au_lib.bolha);
             self->buttons[i].pressed = !self->buttons[i].pressed;
             printf("%d\n", self->buttons[i].button_type);
+            action_button(&self->buttons[i], self);
         }
     }
 

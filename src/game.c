@@ -117,13 +117,14 @@ void game_update(void *ctx) {
     g->is_paused = !g->is_paused;
   }
 
-  if (g->is_paused)
-    menu_update(&g->menu, g);
-
+  
+  UpdateMusicStream(g->menu.au_lib.background_music);
+  
   // Skip game updates if paused
   if (g->is_paused) {
     character_read_input(&g->player, g->is_paused);
     character_update(&g->player, GetFrameTime(), g->is_paused);
+    menu_update(&g->menu, g);
     return;
   }
 
@@ -141,4 +142,9 @@ void game_loop(void *ctx) {
   game_draw(ctx);
 }
 
-void game_exit(void *ctx) { CloseWindow(); CloseAudioDevice();}
+void game_exit(void *ctx) { 
+  CloseWindow(); 
+  GameContext *g = (GameContext *)ctx;
+    UnloadMusicStream(g->menu.au_lib.background_music); 
+    CloseAudioDevice();
+}

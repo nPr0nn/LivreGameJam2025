@@ -27,14 +27,20 @@ typedef struct {
 } Button;
 
 typedef struct {
+    Music background_music;
+    Sound bolha;
+} Audios_library;
+
+typedef struct {
     Vector2 pos;
     int n_buttons;
     Button buttons[100];
     Vector2 screen_dim;
     Vector2 window_dim;
-
+    Audios_library au_lib;
 
 } Menu;
+
 
 void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim);
 void menu_update(Menu *self, GameContext *g);
