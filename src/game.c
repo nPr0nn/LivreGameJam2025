@@ -13,6 +13,8 @@ void game_init(void *ctx) {
   f32 scale = 0.5;
   InitWindow((i32)(scale * monitor_width), (i32)(scale * monitor_height),
              "Livre GameJam");
+#else
+  InitWindow(1080, 720, "Livre GameJam");
 #endif
 
   g->camera = (Camera2D){{(scale*monitor_width)/2, (scale*monitor_height)/2}, {0, 0}, 0.0, 1.0};

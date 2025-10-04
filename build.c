@@ -1,5 +1,4 @@
 
-#include <sys/types.h>
 #define SLC_IMPL
 #define SLC_NO_LIB_PREFIX
 #include "vendor/slc.h"
@@ -16,25 +15,23 @@ void build_vendors(String target_folder_path, bool build_to_web,
   else
     compiler_name = string_from_cstr("gcc", arena_ptr);
 
-  String raylib_modules[] = {
-      string_from_cstr("rcore", arena_ptr),
-      string_from_cstr("raudio", arena_ptr),
-      string_from_cstr("rshapes", arena_ptr),
-      // string_from_cstr("rmodels", arena_ptr),
-      string_from_cstr("rtext", arena_ptr),
-      string_from_cstr("rtextures", arena_ptr),
-      string_from_cstr("utils", arena_ptr),
+  String raylib_modules[] = {string_from_cstr("rcore", arena_ptr),
+                             string_from_cstr("raudio", arena_ptr),
+                             string_from_cstr("rshapes", arena_ptr),
+                             // string_from_cstr("rmodels", arena_ptr),
+                             string_from_cstr("rtext", arena_ptr),
+                             string_from_cstr("rtextures", arena_ptr),
+                             string_from_cstr("utils", arena_ptr),
 
-      //  string_from_cstr("rglfw", arena_ptr)
-  };
-  int num_raylib_modules = stack_array_size(raylib_modules);
+                             string_from_cstr("rglfw", arena_ptr)};
+  i32 num_raylib_modules = stack_array_size(raylib_modules);
 
   String *flags_list;
   i32 flags_count = -1;
   String desktop_flags_list[] = {
       string_from_cstr("-Wall", arena_ptr),
       string_from_cstr("-D_GNU_SOURCE", arena_ptr),
-      string_from_cstr("-DPLATFORM_DESKTOP_RGFW", arena_ptr),
+      string_from_cstr("-DPLATFORM_DESKTOP_GLFW", arena_ptr),
       string_from_cstr("-DGRAPHICS_API_OPENGL_33", arena_ptr),
       string_from_cstr("-Wno-missing-braces", arena_ptr),
       string_from_cstr("-Werror=pointer-arith", arena_ptr),
@@ -43,15 +40,14 @@ void build_vendors(String target_folder_path, bool build_to_web,
       string_from_cstr("-fPIC", arena_ptr),
       string_from_cstr("-O2", arena_ptr),
       string_from_cstr("-Werror=implicit-function-declaration", arena_ptr),
-      // string_from_cstr("-D_GLFW_X11", arena_ptr),
-      // string_from_cstr("-I.", arena_ptr),
-      // string_from_cstr("-Ivendor/raylib/external/glfw/include", arena_ptr)
-  };
+      string_from_cstr("-D_GLFW_X11", arena_ptr),
+      string_from_cstr("-I.", arena_ptr),
+      string_from_cstr("-Ivendor/raylib/external/glfw/include", arena_ptr)};
   i32 desktop_flags_count = stack_array_size(desktop_flags_list);
 
   String web_flags_list[] = {
       string_from_cstr("-Wall", arena_ptr),
-      string_from_cstr("-DPLATFORM_WEB_RGFW", arena_ptr),
+      string_from_cstr("-DPLATFORM_WEB", arena_ptr),
       string_from_cstr("-DGRAPHICS_API_OPENGL_ES2", arena_ptr),
   };
   i32 web_flags_count = stack_array_size(web_flags_list);
@@ -147,56 +143,63 @@ void build_vendors(String target_folder_path, bool build_to_web,
 
 void build_game(String build_folder_path, String exec_name, bool build_to_web,
                 MemArena *arena_ptr) {
-  print("Building game executable...\n");
+  print("Building game...\n");
 
-  DynamicArray(String) args = dynamic_array_create(String, 32, arena_ptr);
+  // Output path
+  String output_file = string_create(arena_ptr);
+  string_append(&output_file, &build_folder_path);
+  string_append(&output_file, &exec_name);
 
-  // 1. Compiler
-  String compiler_name;
-  if (build_to_web)
-    compiler_name = string_from_cstr("emcc", arena_ptr);
-  else
-    compiler_name = string_from_cstr("gcc", arena_ptr);
-  dynamic_array_push_back(&args, compiler_name);
+  if (build_to_web) {
+    // --- Web build (emcc) ---
+    String args[] = {
+        string_from_cstr("emcc", arena_ptr),
+        string_from_cstr("-o", arena_ptr),
+        string_from_cstr("target/web/index.js", arena_ptr),
 
-  // 2. Flags
-  dynamic_array_push_back(&args, string_from_cstr("-std=c99", arena_ptr));
-  dynamic_array_push_back(&args, string_from_cstr("-Iraylib", arena_ptr));
+        string_from_cstr("src/main.c", arena_ptr),
+        string_from_cstr("src/game.c", arena_ptr),
 
-  // 3. Output file
-  String output_file =
-      string_from_view(string_view(&build_folder_path), arena_ptr);
-  string_append_view(&output_file, string_view(&exec_name));
-  dynamic_array_push_back(&args, string_from_cstr("-o", arena_ptr));
-  dynamic_array_push_back(&args, output_file);
+        string_from_cstr("-Os", arena_ptr),
+        string_from_cstr("-Wall", arena_ptr),
 
-  // 4. Source files
-  dynamic_array_push_back(&args, string_from_cstr("src/main.c", arena_ptr));
-  dynamic_array_push_back(&args, string_from_cstr("src/game.c", arena_ptr));
+        string_from_cstr("target/web/libraylib.a", arena_ptr),
+
+        string_from_cstr("-s", arena_ptr),
+        string_from_cstr("USE_GLFW=3", arena_ptr),
+
+        string_from_cstr("-s", arena_ptr),
+        string_from_cstr("FULL_ES2=1", arena_ptr),
+
+        string_from_cstr("-DPLATFORM_WEB", arena_ptr),
+    };
+  } else {
+    // --- Desktop build (gcc) ---
+    String args[] = {
+        string_from_cstr("gcc", arena_ptr),
+        string_from_cstr("-std=c99", arena_ptr),
+        string_from_cstr("-Iraylib", arena_ptr),
+        string_from_cstr("-o", arena_ptr),
+        output_file,
+
+        string_from_cstr("src/main.c", arena_ptr),
+        string_from_cstr("src/game.c", arena_ptr),
   dynamic_array_push_back(&args, string_from_cstr("src/character.c", arena_ptr));
 
-  // 5. Library Path
-  String lib_path = string_from_cstr("-L", arena_ptr);
-  string_append(&lib_path, &build_folder_path);
-  dynamic_array_push_back(&args, lib_path);
+        string_from_cstr("-L", arena_ptr),
+        build_folder_path,
 
-  // 6. Libraries to link
-  dynamic_array_push_back(&args, string_from_cstr("-lraylib", arena_ptr));
-  dynamic_array_push_back(&args, string_from_cstr("-lm", arena_ptr));
-  dynamic_array_push_back(&args, string_from_cstr("-pthread", arena_ptr));
-  dynamic_array_push_back(&args, string_from_cstr("-ldl", arena_ptr));
-  dynamic_array_push_back(&args, string_from_cstr("-lrt", arena_ptr));
-  dynamic_array_push_back(&args, string_from_cstr("-lX11", arena_ptr));
-  dynamic_array_push_back(&args, string_from_cstr("-lXrandr", arena_ptr));
-  dynamic_array_push_back(&args, string_from_cstr("-lGL", arena_ptr));
-
-  print("Executing command: ");
-  for (size_t k = 0; k < args.size; k++) {
-    print("%s ", args.data[k].data);
+        string_from_cstr("-lraylib", arena_ptr),
+        string_from_cstr("-lm", arena_ptr),
+        string_from_cstr("-pthread", arena_ptr),
+        string_from_cstr("-ldl", arena_ptr),
+        string_from_cstr("-lrt", arena_ptr),
+        string_from_cstr("-lX11", arena_ptr),
+        string_from_cstr("-lXrandr", arena_ptr),
+        string_from_cstr("-lGL", arena_ptr),
+    };
+    cmd_exec(stack_array_size(args), args);
   }
-  print("\n");
-
-  cmd_exec(args.size, args.data);
 }
 
 void run_game(String build_folder_path, String exec_name, bool build_to_web,
@@ -207,6 +210,13 @@ void run_game(String build_folder_path, String exec_name, bool build_to_web,
     string_append(&command, &build_folder_path);
     string_append(&command, &exec_name);
     cmd_exec(1, &command);
+  } else {
+    String run_commands[] = {
+        string_from_cstr("emrun", arena_ptr),
+        string_from_cstr("index.html", arena_ptr),
+    };
+    i32 run_commands_count = stack_array_size(run_commands);
+    cmd_exec(run_commands_count, run_commands);
   }
 }
 
