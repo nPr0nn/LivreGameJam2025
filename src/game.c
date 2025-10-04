@@ -17,7 +17,10 @@ void game_init(void *ctx) {
   InitWindow(1080, 720, "Livre GameJam");
 #endif
 
-  g->camera = (Camera2D){{(scale*monitor_width)/2, (scale*monitor_height)/1.25}, {0, 0}, 0.0, 1.0};
+  i32 camera_initial_pos_x = (scale*monitor_width)/2;
+  i32 camera_initial_pos_y = (scale*monitor_height)/1.25;
+
+  g->camera = (Camera2D){{camera_initial_pos_x, camera_initial_pos_y}, {0, 0}, 0.0, 1.0};
   g->pos = (Vector2){0, 0};
   g->is_paused = false; // Initialize paused state to false
   character_init(&g->player, (Vector2){0, 0}, 15, BLUE);
