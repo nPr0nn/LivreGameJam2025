@@ -3,6 +3,7 @@
 #include "enemy.h"
 #include "game_context.h"
 #include "utils.h"
+#include <stdio.h>
 
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
@@ -16,26 +17,15 @@ void game_init(void *ctx) {
   const i32 scaled_width = target_width * scale_factor;
   const i32 scaled_height = target_height * scale_factor;
 
-#ifndef PLATFORM_WEB
-  i32 current_monitor_id = GetCurrentMonitor();
-  f32 monitor_scale = 0.8f; // a bit larger by default
-  i32 monitor_width =
-      (i32)(monitor_scale * GetMonitorWidth(current_monitor_id));
-  i32 monitor_height =
-      (i32)(monitor_scale * GetMonitorHeight(current_monitor_id));
+  i32 monitor_width = 1080;
+  i32 monitor_height = 540;
 
-  // Make sure the window is at least as large as the scaled canvas
   if (monitor_width < scaled_width)
     monitor_width = scaled_width;
   if (monitor_height < scaled_height)
     monitor_height = scaled_height;
 
   InitWindow(monitor_width, monitor_height, "Livre GameJam");
-#else
-  i32 monitor_width = 960;
-  i32 monitor_height = 540;
-  InitWindow(monitor_width, monitor_height, "Livre GameJam");
-#endif
 
   // --- Create the low-res render texture ---
   g->screen = LoadRenderTexture(target_width, target_height);
@@ -83,7 +73,6 @@ void game_draw(void *ctx) {
   ClearBackground((Color){30, 30, 50, 255});
   BeginMode2D(g->camera);
   DrawInfiniteGrid(g->camera, 25, LIGHTGRAY);
-  DrawCircleV(g->world_mouse_pos, 10, RED);
   character_draw(&g->player);
   enemy_draw(&g->enemy);
 
@@ -111,7 +100,9 @@ void game_draw(void *ctx) {
 
 void game_update(void *ctx) {
   GameContext *g = (GameContext *)ctx;
-  g->dt = GetFrameTime();
+
+  character_read_input(&g->player);
+  character_update(&g->player, GetFrameTime());
 
   // Toggle pause state when P is pressed
   if (IsKeyPressed(KEY_P)) {

@@ -22,7 +22,6 @@ typedef struct GameContext {
   Vector2 world_mouse_pos;
   Character player;
   Enemy enemy;
-
   f64 dt;
   bool is_paused;
 } GameContext;
