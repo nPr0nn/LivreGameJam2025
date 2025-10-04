@@ -14,6 +14,7 @@ void game_init(void *ctx) {
   f32 scale = 0.5;
   InitWindow((i32)(scale * monitor_width), (i32)(scale * monitor_height),
              "Livre GameJam");
+  
 #else
   InitWindow(1080, 720, "Livre GameJam");
 #endif
@@ -21,6 +22,7 @@ void game_init(void *ctx) {
   g->camera = (Camera2D){{(scale*monitor_width)/2, (scale*monitor_height)/2}, {0, 0}, 0.0, 1.0};
   g->pos = (Vector2){0, 0};
   character_init(&g->player, (Vector2){0, 0}, 15, BLUE);
+  menu_init(&g->menu, (Vector2){0.0,0.0});
 }
 
 void game_draw(void *ctx) {
@@ -35,8 +37,8 @@ void game_draw(void *ctx) {
   DrawCircleV(g->world_mouse_pos, 10, RED);
   character_draw(&g->player);
 
-  menu_draw(&g->menu);
   EndMode2D();  
+  menu_draw(&g->menu);
   EndDrawing();
 }
 
@@ -52,6 +54,7 @@ void game_update(void *ctx) {
   g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
   g->camera.target = g->pos;
   character_update(&g->player);
+  menu_update(&g->menu, g);
 }
 
 void game_loop(void *ctx) {

@@ -5,23 +5,36 @@
 #define SLC_NO_LIB_PREFIX
 #include "../vendor/slc.h"
 
+typedef struct GameContext GameContext; 
 
-
-typedef struct {
-    Vector2 pos;
-    
-} Menu;
+enum B_Type {
+  MUSIC,
+  VOLUME_MUSIC,
+  SOUND_EFFECTS,
+  VOLUME_SOUND_EFFECTS,
+  BRIGHT,
+  DUMMY,
+};
 
 typedef struct {
     Rectangle rec;
-    String text;// = string_from_cstr("kasjaksj", arena_ptr);
+    char *text;
+    Color color;
+    int text_size;
+    enum B_Type button_type;
 
-    // text.size
+} Button;
+
+typedef struct {
+    Vector2 pos;
+    int n_buttons;
+    Button buttons[100];
+
 
 } Menu;
 
 void menu_init(Menu *self, Vector2 pos);
-void menu_update(Menu *self);
-void menu_draw(const Menu *self);
+void menu_update(Menu *self, GameContext *g);
+void menu_draw(Menu *self);
 
 #endif // MENU_H
