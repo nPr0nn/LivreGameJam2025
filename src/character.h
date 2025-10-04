@@ -9,7 +9,7 @@ typedef struct {
 } Character;
 
 void character_init(Character *ch, Vector2 start_pos, float radius, Color color);
-void character_update(Character *ch);
+void character_update(Character *ch, bool is_paused);
 void character_draw(const Character *ch);
 
 #endif // CHARACTER_H

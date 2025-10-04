@@ -19,6 +19,7 @@ typedef struct GameContext {
   Vector2 pos;
   Vector2 world_mouse_pos;
   Character player;
+  bool is_paused;
 } GameContext;
 
 #endif

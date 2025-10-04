@@ -17,8 +17,9 @@ void game_init(void *ctx) {
   InitWindow(1080, 720, "Livre GameJam");
 #endif
 
-  g->camera = (Camera2D){{(scale*monitor_width)/2, (scale*monitor_height)/2}, {0, 0}, 0.0, 1.0};
+  g->camera = (Camera2D){{(scale*monitor_width)/2, (scale*monitor_height)/1.25}, {0, 0}, 0.0, 1.0};
   g->pos = (Vector2){0, 0};
+  g->is_paused = false; // Initialize paused state to false
   character_init(&g->player, (Vector2){0, 0}, 15, BLUE);
 }
 
@@ -33,23 +34,38 @@ void game_draw(void *ctx) {
   DrawInfiniteGrid(g->camera, 25, LIGHTGRAY);
   DrawCircleV(g->world_mouse_pos, 10, RED);
   character_draw(&g->player);
+  EndMode2D();
 
-  EndMode2D();  
+  // Draw pause message if paused
+  if (g->is_paused) {
+    DrawText("Game Paused", 400, 300, 30, RED);
+    DrawText("Press P to Resume", 380, 340, 20, LIGHTGRAY);
+  }
+
   EndDrawing();
 }
 
 void game_update(void *ctx) {
   GameContext *g = (GameContext *)ctx;
 
-  g->pos.x = g->player.pos.x;
-  g->pos.y = g->player.pos.y;
+  // Toggle pause state when P is pressed
+  if (IsKeyPressed(KEY_P)) {
+    g->is_paused = !g->is_paused;
+  }
 
-  // Other stuf
+  // Skip game updates if paused
+  if (g->is_paused) {
+    character_update(&g->player, g->is_paused);
+    return;
+  }
+
+  // g->pos.x = g->player.pos.x;
+  // g->pos.y = g->player.pos.y;
+
   Vector2 screen_mouse_pos = GetMousePosition();
-
   g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
   g->camera.target = g->pos;
-  character_update(&g->player);
+  character_update(&g->player, g->is_paused);
 }
 
 void game_loop(void *ctx) {
