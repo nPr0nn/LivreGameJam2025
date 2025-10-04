@@ -2,11 +2,18 @@
 #include "menu.h"
 #include "game_context.h"
 
-Button button_init(int x, int y, int width, int height, char * text, int r, int g, int b, int a, int text_size, enum B_Type type)
+Button button_init(int x, int y, int width, int height, char * text, int r, int g, int b, int a, int text_size, enum B_Type type, char *img_path)
 {
     Rectangle rec = (Rectangle){x,y,width,height};
     Color color = (Color){r,g,b,a};
-    Button but = (Button){rec, text, color, text_size, type};
+
+    //imagem
+    Image sprite_sheet_image = LoadImage(img_path);
+    Texture sprite_sheet = LoadTextureFromImage(sprite_sheet_image);
+    UnloadImage(sprite_sheet_image);
+
+    //passa tudo pro botao
+    Button but = (Button){rec, text, color, text_size, type, sprite_sheet};
     return but;
 }
 
@@ -15,13 +22,13 @@ void button_draw(Button *self)
 DrawRectangleRoundedLinesEx(self->rec, 0.1, 0, 1, (Color){255,255,255,255});
 DrawRectangleRounded(self->rec, 0.1, 1, self->color);
 DrawText(self->text, self->rec.x + self->rec.width/2 - MeasureText(self->text, self->text_size)/2, self->rec.y + self->rec.height/2-self->text_size/2, self->text_size, LIGHTGRAY);
-
+DrawTextureRec(self->sprite_sheet, source_rec, ch->pos, WHITE);
 }
 
 void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim)
 {
-    self->buttons[0] = button_init(screen_dim.x/2-20,10,40,15, "Olá mundo!", 255,255,255,255, 10, DUMMY);
-    self->buttons[1] = button_init(screen_dim.x/2-20,30,40,15, "Música!", 255,255,255,255, 10, MUSIC);
+    // self->buttons[0] = button_init(screen_dim.x/2-20,10,40,15, "Olá mundo!", 255,255,255,255, 10, DUMMY, NULL);
+    self->buttons[1] = button_init(screen_dim.x/2-20,30,40,15, "Música!", 255,255,255,255, 10, MUSIC, "music");
     self->n_buttons = 2;
     self->screen_dim = screen_dim;
     self->window_dim = window_dim;
