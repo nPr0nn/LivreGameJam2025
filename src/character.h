@@ -11,6 +11,12 @@ typedef struct {
   Color idle_color;
   Color render_color;
   Color colision_color;
+
+  Texture sprite_sheet;
+  int frame_width;
+  int frame_height;
+  int current_frame;
+  int num_frames;
 } Character;
 
 void character_init(Character *ch, Vector2 start_pos, float radius,
@@ -18,6 +24,7 @@ void character_init(Character *ch, Vector2 start_pos, float radius,
 void character_update(Character *ch, float dt, bool is_paused);
 void character_read_input(Character *ch, bool is_paused);
 void character_draw(const Character *ch);
-void character_check_collision(Character *ch, Vector2 *enemy_position, Vector2 *enemy_size);
+void character_check_collision(Character *ch, Vector2 *enemy_position,
+                               Vector2 *enemy_size);
 
 #endif // CHARACTER_H

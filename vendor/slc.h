@@ -994,7 +994,9 @@ SLC_API_PUBLIC void slc_string_clear(slc_String *str) {
 // =============================================================================
 
 SLC_API_PUBLIC LIBC_DEP void slc_cmd_exec(i32 argc, slc_String *cmd_args);
-
+SLC_API_PUBLIC LIBC_DEP slc_String *slc_list_files(const char *folder_path,
+                                                   size_t *out_count,
+                                                   slc_MemArena *arena_ptr);
 #ifdef SLC_NO_LIB_PREFIX
 #define cmd_exec slc_cmd_exec
 #endif
@@ -1079,6 +1081,59 @@ SLC_API_PUBLIC LIBC_DEP void slc_cmd_exec(i32 argc, slc_String *cmd_args) {
                      signal_num);
   }
 }
+
+#include <dirent.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/stat.h>
+
+/// @brief Returns an array of all file paths inside a directory.
+/// @param folder_path Path to the folder.
+/// @param out_count Optional pointer to store the number of files found.
+/// @return Dynamic array of slc_String representing file paths.
+SLC_API_PUBLIC LIBC_DEP slc_String *slc_list_files(const char *folder_path,
+                                                   size_t *out_count,
+                                                   slc_MemArena *arena_ptr) {
+  if (!folder_path || !arena_ptr)
+    return NULL;
+
+  slc_DynamicArray(slc_String) files =
+      slc_dynamic_array_create(slc_String, 16, arena_ptr);
+
+  DIR *dir = opendir(folder_path);
+  if (!dir) {
+    slc_stream_print(stderr,
+                     "SLC_FS Error: Failed to open directory '%s': %s\n",
+                     folder_path, strerror(errno));
+    if (out_count)
+      *out_count = 0;
+    return NULL;
+  }
+
+  struct dirent *entry;
+  while ((entry = readdir(dir)) != NULL) {
+    // Skip "." and ".."
+    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+      continue;
+
+    // Build the full path: folder_path + "/" + entry->d_name
+    usize len = strlen(folder_path) + 1 + strlen(entry->d_name) + 1;
+    char *full_path = slc_mem_arena_alloc(arena_ptr, len);
+    snprintf(full_path, len, "%s/%s", folder_path, entry->d_name);
+
+    slc_String path_str = slc_string_from_cstr(full_path, arena_ptr);
+    slc_dynamic_array_push_back(&files, path_str);
+  }
+
+  closedir(dir);
+
+  if (out_count)
+    *out_count = files.size;
+
+  // Return the internal array from the dynamic array
+  return files.data;
+}
+
 #endif
 
 #ifdef SLC_PLATFORM_WINDOWS

@@ -8,6 +8,13 @@
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
 
+  // const char *folder_path = "images";
+  // size_t count = 0;
+  // slc_String *paths = slc_list_files(folder_path, &count, g->g_arena);
+  // for (i32 i = 0; i < count; i++) {
+  //   printf("path: %s \n", paths[i].data);
+  // }
+
   // --- Retro target resolution ---
   const i32 target_width = 160;
   const i32 target_height = 144;
