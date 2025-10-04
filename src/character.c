@@ -9,7 +9,9 @@ void character_init(Character *ch, Vector2 start_pos, float radius,
   ch->vel = (Vector2){0};
   ch->acc = (Vector2){0};
   ch->radius = radius;
-  ch->color = color;
+  ch->idle_color = color;
+  ch->render_color = color;
+  ch->colision_color = GREEN;
 }
 
 void character_read_input(Character *ch, bool is_paused) {
@@ -27,8 +29,7 @@ void character_read_input(Character *ch, bool is_paused) {
     ch->vel.y += -300.0f;
   } else if (IsKeyPressed(KEY_SPACE) && is_paused && ch->pos.y == 0) {
     ch->vel.y += -200.0f;
-}
-
+  }
 }
 
 void character_update(Character *ch, float dt, bool is_paused) {
@@ -60,5 +61,16 @@ void character_update(Character *ch, float dt, bool is_paused) {
 }
 
 void character_draw(const Character *ch) {
-  DrawCircleV(ch->pos, ch->radius, ch->color);
+  DrawCircleV(ch->pos, ch->radius, ch->render_color);
+}
+
+void character_check_collision(Character *ch, Vector2 *enemy_position, Vector2 *enemy_size) {
+    Rectangle enemyRect = {enemy_position->x, enemy_position->y, enemy_size->x, enemy_size->y}; // Enemy size is 10x10
+    Rectangle playerRect = {ch->pos.x - ch->radius, ch->pos.y - ch->radius, ch->radius * 2, ch->radius * 2};
+
+    if (CheckCollisionRecs(enemyRect, playerRect)) {
+      ch->render_color = ch->colision_color; // Change color to green on collision
+    } else {
+      ch->render_color = ch->idle_color; // Revert to original color if no collision
+    }  
 }

@@ -7,6 +7,7 @@
 #include "../vendor/slc.h"
 
 #include "character.h"
+#include "enemy.h"
 #include <math.h>
 
 typedef struct GameContext {
@@ -20,6 +21,7 @@ typedef struct GameContext {
   Vector2 pos;
   Vector2 world_mouse_pos;
   Character player;
+  Enemy enemy;
 
   f64 dt;
   bool is_paused;

@@ -163,6 +163,7 @@ void build_game(String build_folder_path, String exec_name, bool build_to_web,
         string_from_cstr("src/main.c", arena_ptr),
         string_from_cstr("src/game.c", arena_ptr),
         string_from_cstr("src/character.c", arena_ptr),
+        string_from_cstr("src/enemy.c", arena_ptr),
 
         string_from_cstr("-Os", arena_ptr),
         string_from_cstr("-Wall", arena_ptr),
@@ -200,6 +201,8 @@ void build_game(String build_folder_path, String exec_name, bool build_to_web,
         string_from_cstr("src/main.c", arena_ptr),
         string_from_cstr("src/game.c", arena_ptr),
         string_from_cstr("src/character.c", arena_ptr),
+        string_from_cstr("src/enemy.c", arena_ptr),
+
 
         string_from_cstr("-L", arena_ptr),
         build_folder_path,

@@ -1,5 +1,6 @@
 #include "game.h"
 #include "character.h"
+#include "enemy.h"
 #include "game_context.h"
 #include "utils.h"
 
@@ -51,6 +52,7 @@ void game_init(void *ctx) {
   g->pos = (Vector2){0, 0};
   g->is_paused = false; // Initialize paused state to false
   character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
+  enemy_init(&g->enemy, (Vector2){30, 0}, 30.0f); // Initialize enemy
 
   g->dt = 0;
 }
@@ -83,6 +85,7 @@ void game_draw(void *ctx) {
   DrawInfiniteGrid(g->camera, 25, LIGHTGRAY);
   DrawCircleV(g->world_mouse_pos, 10, RED);
   character_draw(&g->player);
+  enemy_draw(&g->enemy);
 
   EndMode2D();
   DrawText("Congrats! You created your first window!", 10, 10, 10, LIGHTGRAY);
@@ -130,6 +133,8 @@ void game_update(void *ctx) {
   g->camera.target = g->pos;
   character_read_input(&g->player, g->is_paused);
   character_update(&g->player, g->dt, g->is_paused);
+  enemy_update(&g->enemy, g->dt);
+  character_check_collision(&g->player, &g->enemy.position, &g->enemy.radius);
 }
 
 void game_loop(void *ctx) {
