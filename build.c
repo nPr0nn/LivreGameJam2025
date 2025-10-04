@@ -173,6 +173,7 @@ void build_game(String build_folder_path, String exec_name, bool build_to_web,
   // 4. Source files
   dynamic_array_push_back(&args, string_from_cstr("src/main.c", arena_ptr));
   dynamic_array_push_back(&args, string_from_cstr("src/game.c", arena_ptr));
+  dynamic_array_push_back(&args, string_from_cstr("src/character.c", arena_ptr));
 
   // 5. Library Path
   String lib_path = string_from_cstr("-L", arena_ptr);

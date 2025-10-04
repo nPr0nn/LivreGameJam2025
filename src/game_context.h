@@ -7,6 +7,7 @@
 #include "../vendor/slc.h"
 
 #include <math.h>
+#include "character.h"
 
 typedef struct GameContext {
   // Memmory Management
@@ -17,6 +18,7 @@ typedef struct GameContext {
   Camera2D camera;
   Vector2 pos;
   Vector2 world_mouse_pos;
+  Character player;
 } GameContext;
 
 #endif

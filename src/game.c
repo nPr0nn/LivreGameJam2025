@@ -1,7 +1,7 @@
-
 #include "game.h"
 #include "game_context.h"
 #include "utils.h"
+#include "character.h"
 
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
@@ -15,8 +15,9 @@ void game_init(void *ctx) {
              "Livre GameJam");
 #endif
 
-  g->camera = (Camera2D){{0, 0}, {0, 0}, 0.0, 1.0};
+  g->camera = (Camera2D){{(scale*monitor_width)/2, (scale*monitor_height)/2}, {0, 0}, 0.0, 1.0};
   g->pos = (Vector2){0, 0};
+  character_init(&g->player, (Vector2){0, 0}, 15, BLUE);
 }
 
 void game_draw(void *ctx) {
@@ -27,32 +28,26 @@ void game_draw(void *ctx) {
 
   BeginMode2D(g->camera);
   DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
-
   DrawInfiniteGrid(g->camera, 25, LIGHTGRAY);
   DrawCircleV(g->world_mouse_pos, 10, RED);
+  character_draw(&g->player);
 
-  EndMode2D();
+  EndMode2D();  
   EndDrawing();
 }
 
 void game_update(void *ctx) {
   GameContext *g = (GameContext *)ctx;
 
-  // Inputs
-  if (IsKeyDown(KEY_LEFT))
-    g->pos.x -= 1;
-  if (IsKeyDown(KEY_RIGHT))
-    g->pos.x += 1;
-  if (IsKeyDown(KEY_UP))
-    g->pos.y -= 1;
-  if (IsKeyDown(KEY_DOWN))
-    g->pos.y += 1;
+  g->pos.x = g->player.pos.x;
+  g->pos.y = g->player.pos.y;
 
   // Other stuf
   Vector2 screen_mouse_pos = GetMousePosition();
 
   g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
   g->camera.target = g->pos;
+  character_update(&g->player);
 }
 
 void game_loop(void *ctx) {
