@@ -43,8 +43,6 @@ void game_init(void *ctx) {
   g->is_paused = false; // Initialize paused state to false
   character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
   enemy_init(&g->enemy, (Vector2){30, 0}, 30.0f); // Initialize enemy
-
-  g->dt = 0;
 }
 
 void game_draw(void *ctx) {
@@ -101,8 +99,8 @@ void game_draw(void *ctx) {
 void game_update(void *ctx) {
   GameContext *g = (GameContext *)ctx;
 
-  character_read_input(&g->player);
-  character_update(&g->player, GetFrameTime());
+  character_read_input(&g->player, g->is_paused);
+  character_update(&g->player, GetFrameTime(), g->is_paused);
 
   // Toggle pause state when P is pressed
   if (IsKeyPressed(KEY_P)) {
@@ -112,19 +110,16 @@ void game_update(void *ctx) {
   // Skip game updates if paused
   if (g->is_paused) {
     character_read_input(&g->player, g->is_paused);
-    character_update(&g->player, g->dt,  g->is_paused);
+    character_update(&g->player, GetFrameTime(),  g->is_paused);
     return;
   }
-
-  // g->pos.x = g->player.pos.x;
-  // g->pos.y = g->player.pos.y;
 
   Vector2 screen_mouse_pos = GetMousePosition();
   g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
   g->camera.target = g->pos;
   character_read_input(&g->player, g->is_paused);
-  character_update(&g->player, g->dt, g->is_paused);
-  enemy_update(&g->enemy, g->dt);
+  character_update(&g->player, GetFrameTime(), g->is_paused);
+  enemy_update(&g->enemy, GetFrameTime());
   character_check_collision(&g->player, &g->enemy.position, &g->enemy.radius);
 }
 
