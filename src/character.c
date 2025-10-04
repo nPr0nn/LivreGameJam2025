@@ -1,6 +1,7 @@
 #include "game.h"
 #include "utils.h"
 #include "character.h"
+#include "../vendor/raylib/raylib.h"
 
 void character_init(Character *ch, Vector2 start_pos, float radius, Color color) {
     ch->pos = start_pos;
@@ -11,8 +12,8 @@ void character_init(Character *ch, Vector2 start_pos, float radius, Color color)
 
 void character_update(Character *ch) {
     // Horizontal movement
-    if (IsKeyDown(KEY_LEFT))  ch->pos.x -= 5;
-    if (IsKeyDown(KEY_RIGHT)) ch->pos.x += 5;
+    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))  ch->pos.x -= 5;
+    if (IsKeyDown(KEY_RIGHT)|| IsKeyDown(KEY_D)) ch->pos.x += 5;
 
     // Gravity
     float gravity = 0.5f;
@@ -26,7 +27,7 @@ void character_update(Character *ch) {
     }
 
     // Jump (optional)
-    if (IsKeyPressed(KEY_SPACE) && ch->pos.y == 0) {
+    if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_W)) && ch->pos.y == 0) {
         ch->velocity_y = 10.0f;
     }
 }

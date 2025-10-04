@@ -8,6 +8,7 @@
 
 #include <math.h>
 #include "character.h"
+#include "menu.h"
 
 typedef struct GameContext {
   // Memmory Management
@@ -19,6 +20,7 @@ typedef struct GameContext {
   Vector2 pos;
   Vector2 world_mouse_pos;
   Character player;
+  Menu menu;
 } GameContext;
 
 #endif

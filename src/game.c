@@ -2,6 +2,7 @@
 #include "game_context.h"
 #include "utils.h"
 #include "character.h"
+#include "menu.h"
 
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
@@ -34,6 +35,7 @@ void game_draw(void *ctx) {
   DrawCircleV(g->world_mouse_pos, 10, RED);
   character_draw(&g->player);
 
+  menu_draw(&g->menu);
   EndMode2D();  
   EndDrawing();
 }
