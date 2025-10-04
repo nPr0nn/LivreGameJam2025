@@ -1,6 +1,7 @@
 # Build Files 
 target/desktop/*
 target/web/*
+build
 
 # Prerequisites
 *.d
@@ -57,3 +58,7 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Vscode
+.vscode/*
+.vscode/
