@@ -31,6 +31,7 @@ typedef struct GameContext {
   int edit_mode; // 0 = single-tile place, 1 = rectangle place (two clicks)
   int pending_action; // 0 = none, 1 = place, -1 = erase (for rectangle mode)
   int save_flash_counter; // frames to show "saved" message
+  slc_String *paths; // list of tile image paths
   // Collision layer: support types and IDs
   // collision_type: 0 = none, 1 = solid, 2 = death, 3 = trigger
   int collision_type[MAP_W][MAP_H];

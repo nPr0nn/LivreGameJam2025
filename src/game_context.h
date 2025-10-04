@@ -24,6 +24,9 @@ typedef struct GameContext {
   Enemy enemy;
   f64 dt;
   bool is_paused;
+
+  // Map and Tiles
+  
 } GameContext;
 
 #endif

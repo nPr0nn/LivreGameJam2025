@@ -1,4 +1,3 @@
-
 #include "editor.h"
 #include "game_context.h"
 #include "utils.h"
@@ -25,6 +24,7 @@ void game_init(void *ctx) {
   InitWindow((i32)(scale * monitor_width), (i32)(scale * monitor_height),
              "Livre GameJam");
 #endif
+  
 
   // Editor defaults
   g->selected_tile = 1;
@@ -33,11 +33,14 @@ void game_init(void *ctx) {
   g->pending_action = 0;
   g->save_flash_counter = 0;
 
+
+  const char *folder_path = "images";
+  size_t count = 0;
+  g->paths = slc_list_files(folder_path, &count, g->g_arena);
+
   // Load tiles
   for (int i = 0; i < NUM_TILES; i++) {
-    char path[64];
-    snprintf(path, sizeof(path), "assets/tiles/tile_%d.png", i);
-    g->tiles[i] = LoadTexture(path);
+    g->tiles[i] = LoadTexture(g->paths[i].data);
   }
   
   // Initialize map to empty
@@ -400,7 +403,8 @@ void game_update(void *ctx) {
           // mark visited
           for (int yy = y; yy < y + h; yy++) for (int xx = x; xx < x + w; xx++) visited[xx][yy] = 1;
           if (!first) fprintf(f, ",\n");
-          fprintf(f, "  {\"tile\": %d, \"x\": %d, \"y\": %d, \"w\": %d, \"h\": %d}", v, x, y, w, h);
+          char tname[256];
+          snprintf(tname, sizeof(tname), "%s", g->paths[v].data); fprintf(f, "  {\"tile\": \"%s\", \"x\": %d, \"y\": %d, \"w\": %d, \"h\": %d}", tname, x, y, w, h);
           first = 0;
         }
       }
@@ -437,7 +441,11 @@ void game_update(void *ctx) {
           }
           for (int yy = y; yy < y + h; yy++) for (int xx = x; xx < x + w; xx++) visited[xx][yy] = 1;
           if (!first) fprintf(f, ",\n");
-          fprintf(f, "  {\"type\": %d, \"id\": %d, \"x\": %d, \"y\": %d, \"w\": %d, \"h\": %d}", ct, cid, x, y, w, h);
+          const char *typename = "unknown";
+          if (ct == 1) typename = "solid";
+          else if (ct == 2) typename = "death";
+          else if (ct == 3) typename = "trigger";
+          fprintf(f, "  {\"type\": \"%s\", \"id\": %d, \"x\": %d, \"y\": %d, \"w\": %d, \"h\": %d}", typename, cid, x, y, w, h);
           first = 0;
         }
       }
