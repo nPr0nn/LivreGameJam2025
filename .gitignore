@@ -1,6 +1,7 @@
 # Build Files 
 target/desktop/*
 target/web/*
+build
 
 # Prerequisites
 *.d
