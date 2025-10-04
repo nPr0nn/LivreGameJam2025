@@ -6,7 +6,11 @@
 #define SLC_NO_LIB_PREFIX
 #include "../../vendor/slc.h"
 
-#define MAX_EDITOR_OPTIONS 10
+#define NUM_TILES 10
+#define TILE_SIZE 32
+
+#define MAP_W 100
+#define MAP_H 100
 
 #include <math.h>
 
@@ -21,10 +25,16 @@ typedef struct GameContext {
   Vector2 world_mouse_pos;
 
   // Editor
-  int panel_height;
-  Rectangle options[MAX_EDITOR_OPTIONS];
-  int selected_option; 
+  int selected_tile;
+  Vector2 click_points[3];
+  int click_count;
+  int edit_mode; // 0 = single-tile place, 1 = rectangle place (two clicks)
+  int pending_action; // 0 = none, 1 = place, -1 = erase (for rectangle mode)
 
+  // Map
+  int map[MAP_W][MAP_H]; // -1 if empty, otherwise index of tile
+
+  Texture2D tiles[NUM_TILES];
 } GameContext;
 
 #endif
