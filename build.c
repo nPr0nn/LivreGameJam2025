@@ -23,7 +23,8 @@ void build_vendors(String target_folder_path, bool build_to_web,
                              string_from_cstr("rtextures", arena_ptr),
                              string_from_cstr("utils", arena_ptr),
 
-                             string_from_cstr("rglfw", arena_ptr)};
+                            //  string_from_cstr("rglfw", arena_ptr)
+                            };
   i32 num_raylib_modules = stack_array_size(raylib_modules);
 
   String *flags_list;
@@ -31,7 +32,7 @@ void build_vendors(String target_folder_path, bool build_to_web,
   String desktop_flags_list[] = {
       string_from_cstr("-Wall", arena_ptr),
       string_from_cstr("-D_GNU_SOURCE", arena_ptr),
-      string_from_cstr("-DPLATFORM_DESKTOP_GLFW", arena_ptr),
+      string_from_cstr("-DPLATFORM_DESKTOP_RGFW", arena_ptr),
       string_from_cstr("-DGRAPHICS_API_OPENGL_33", arena_ptr),
       string_from_cstr("-Wno-missing-braces", arena_ptr),
       string_from_cstr("-Werror=pointer-arith", arena_ptr),
@@ -40,14 +41,15 @@ void build_vendors(String target_folder_path, bool build_to_web,
       string_from_cstr("-fPIC", arena_ptr),
       string_from_cstr("-O2", arena_ptr),
       string_from_cstr("-Werror=implicit-function-declaration", arena_ptr),
-      string_from_cstr("-D_GLFW_X11", arena_ptr),
-      string_from_cstr("-I.", arena_ptr),
-      string_from_cstr("-Ivendor/raylib/external/glfw/include", arena_ptr)};
+      // string_from_cstr("-D_GLFW_X11", arena_ptr),
+      // string_from_cstr("-I.", arena_ptr),
+      // string_from_cstr("-Ivendor/raylib/external/glfw/include", arena_ptr)
+      };
   i32 desktop_flags_count = stack_array_size(desktop_flags_list);
 
   String web_flags_list[] = {
       string_from_cstr("-Wall", arena_ptr),
-      string_from_cstr("-DPLATFORM_WEB", arena_ptr),
+      string_from_cstr("-DPLATFORM_WEB_RGFW", arena_ptr),
       string_from_cstr("-DGRAPHICS_API_OPENGL_ES2", arena_ptr),
   };
   i32 web_flags_count = stack_array_size(web_flags_list);
