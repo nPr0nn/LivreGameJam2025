@@ -5,6 +5,7 @@ typedef struct {
     Vector2 pos;
     float radius;
     Color color;
+    float velocity_y;
 } Character;
 
 void character_init(Character *ch, Vector2 start_pos, float radius, Color color);
