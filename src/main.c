@@ -24,10 +24,11 @@ i32 main(void) {
   MemArena frame_arena = {0};
   game.g_arena = &global_arena;
   game.f_arena = &frame_arena;
-
+  
   game_init(&game);
   set_application_loop(&game, game_loop);
   game_exit(&game);
+  
 
   mem_arena_free(&global_arena);
   mem_arena_free(&frame_arena);

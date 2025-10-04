@@ -36,6 +36,8 @@ void game_init(void *ctx) {
 
   InitWindow(monitor_width, monitor_height, "Livre GameJam");
 
+  InitAudioDevice();
+
   // --- Create the low-res render texture ---
   g->screen = LoadRenderTexture(target_width, target_height);
   SetTextureFilter(g->screen.texture,
@@ -139,4 +141,4 @@ void game_loop(void *ctx) {
   game_draw(ctx);
 }
 
-void game_exit(void *ctx) { CloseWindow(); }
+void game_exit(void *ctx) { CloseWindow(); CloseAudioDevice();}
