@@ -13,7 +13,7 @@ Button button_init(int x, int y, int width, int height, char * text, int r, int 
     UnloadImage(sprite_sheet_image);
 
     //passa tudo pro botao
-    Button but = (Button){rec, text, color, text_size, type, sprite_sheet};
+    Button but = (Button){rec, text, color, text_size, type, sprite_sheet, false};
     return but;
 }
 
@@ -22,13 +22,16 @@ void button_draw(Button *self)
 DrawRectangleRoundedLinesEx(self->rec, 0.1, 0, 1, (Color){255,255,255,255});
 DrawRectangleRounded(self->rec, 0.1, 1, self->color);
 DrawText(self->text, self->rec.x + self->rec.width/2 - MeasureText(self->text, self->text_size)/2, self->rec.y + self->rec.height/2-self->text_size/2, self->text_size, LIGHTGRAY);
-DrawTextureRec(self->sprite_sheet, source_rec, ch->pos, WHITE);
+Color color = WHITE;
+if(self->pressed)
+    color = GRAY;
+DrawTextureRec(self->sprite_sheet, (Rectangle){0,0,16,16}, (Vector2){self->rec.x, self->rec.y}, color);
 }
 
 void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim)
 {
-    // self->buttons[0] = button_init(screen_dim.x/2-20,10,40,15, "Olá mundo!", 255,255,255,255, 10, DUMMY, NULL);
-    self->buttons[1] = button_init(screen_dim.x/2-20,30,40,15, "Música!", 255,255,255,255, 10, MUSIC, "musicnote.png");
+    self->buttons[0] = button_init(screen_dim.x/2-20,10,16,16, "", 255,255,255,255, 10, MUSIC, "images/sound.png");
+    self->buttons[1] = button_init(screen_dim.x/2-20,30,16,16, "", 255,255,255,255, 10, MUSIC, "images/musicnote.png");
     self->n_buttons = 2;
     self->screen_dim = screen_dim;
     self->window_dim = window_dim;
@@ -46,15 +49,19 @@ int detect_click(Button *self, Vector2 screen_dim, Vector2 window_dim)
 
 void menu_draw(Menu *self)
 {
-Rectangle rec = (Rectangle){0, 0, 160,144};
+Rectangle rec = (Rectangle){5, 5, self->screen_dim.x-10,self->screen_dim.y-10};
 Color color = (Color){255,255,255,255};
-DrawRectangleRoundedLinesEx(rec, 0.05, 0, 1, color);
+DrawRectangleRoundedLinesEx(rec, 0.05, 0, 2, color);
 DrawRectangleRounded(rec, 0.05, 1, (Color){100,100,100,230});
 
     for(int i = 0; i<self->n_buttons;i++)
     {
         button_draw(&self->buttons[i]);
     }
+
+// Draw pause message if paused
+DrawText("Game Paused", self->screen_dim.x/2, self->screen_dim.y*0.9, 10, RED);
+DrawText("Press P to Resume", self->screen_dim.x/2, self->screen_dim.y*0.9, 10, LIGHTGRAY);
 
 
 }
@@ -66,7 +73,7 @@ void menu_update(Menu *self, GameContext *g)
     {
         if(detect_click(&self->buttons[i], self->screen_dim, self->window_dim))
         {
-
+            self->buttons[i].pressed = !self->buttons[i].pressed;
             printf("%d\n", self->buttons[i].button_type);
         }
     }

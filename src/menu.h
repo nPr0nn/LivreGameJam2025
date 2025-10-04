@@ -22,8 +22,8 @@ typedef struct {
     Color color;
     int text_size;
     enum B_Type button_type;
-    Texture sprite_sheet
-
+    Texture sprite_sheet;
+    bool pressed;
 } Button;
 
 typedef struct {

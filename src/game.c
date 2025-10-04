@@ -85,7 +85,8 @@ void game_draw(void *ctx) {
   enemy_draw(&g->enemy);
 
   EndMode2D();
-  menu_draw(&g->menu);
+  if (g->is_paused)
+    menu_draw(&g->menu);
   // DrawText("Congrats! You created your first window!", 10, 10, 10, LIGHTGRAY);
   EndTextureMode();
 
@@ -99,11 +100,7 @@ void game_draw(void *ctx) {
                              (float)scaled_height},
                  (Vector2){0, 0}, 0.0f, WHITE);
 
-  // Draw pause message if paused
-  if (g->is_paused) {
-    DrawText("Game Paused", 400, 300, 30, RED);
-    DrawText("Press P to Resume", 380, 340, 20, LIGHTGRAY);
-  }
+
   EndDrawing();
 }
 
@@ -117,6 +114,9 @@ void game_update(void *ctx) {
   if (IsKeyPressed(KEY_P)) {
     g->is_paused = !g->is_paused;
   }
+
+  if (g->is_paused)
+    menu_update(&g->menu, g);
 
   // Skip game updates if paused
   if (g->is_paused) {
@@ -132,7 +132,6 @@ void game_update(void *ctx) {
   character_update(&g->player, GetFrameTime(), g->is_paused);
   enemy_update(&g->enemy, GetFrameTime());
   character_check_collision(&g->player, &g->enemy.position, &g->enemy.radius);
-  menu_update(&g->menu, g);
 }
 
 void game_loop(void *ctx) {
