@@ -28,7 +28,7 @@ DrawTextureRec(self->sprite_sheet, source_rec, ch->pos, WHITE);
 void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim)
 {
     // self->buttons[0] = button_init(screen_dim.x/2-20,10,40,15, "Olá mundo!", 255,255,255,255, 10, DUMMY, NULL);
-    self->buttons[1] = button_init(screen_dim.x/2-20,30,40,15, "Música!", 255,255,255,255, 10, MUSIC, "music");
+    self->buttons[1] = button_init(screen_dim.x/2-20,30,40,15, "Música!", 255,255,255,255, 10, MUSIC, "musicnote.png");
     self->n_buttons = 2;
     self->screen_dim = screen_dim;
     self->window_dim = window_dim;
