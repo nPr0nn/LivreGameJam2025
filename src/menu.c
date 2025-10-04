@@ -42,7 +42,6 @@ int detect_click(Button *self, Vector2 screen_dim, Vector2 window_dim)
     Vector2 mousePoint = GetMousePosition();
     mousePoint.x = (mousePoint.x/window_dim.x) * screen_dim.x;
     mousePoint.y = (mousePoint.y/window_dim.y) * screen_dim.y;
-
     return (CheckCollisionPointRec(mousePoint, self->rec) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
 }
 
@@ -74,6 +73,7 @@ void menu_update(Menu *self, GameContext *g)
     {
         if(detect_click(&self->buttons[i], self->screen_dim, self->window_dim))
         {
+            PlaySound(LoadSound("sounds/bolha.wav"));
             self->buttons[i].pressed = !self->buttons[i].pressed;
             printf("%d\n", self->buttons[i].button_type);
         }
