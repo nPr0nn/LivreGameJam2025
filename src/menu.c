@@ -76,6 +76,10 @@ void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim, 
     self->gamma = 1.0f;
     au_lib_init(self);
     PlayMusicStream(self->au_lib.start_music);
+
+    Image start_image = LoadImage("images/telainicio.png");
+    self->start_texture = LoadTextureFromImage(start_image);
+    UnloadImage(start_image);
 }
 
 int detect_click_button(Button *self, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim)
@@ -123,18 +127,19 @@ void menu_draw(Menu *self)
             break;
             
             case START:
-            DrawText("Voaqueiro", 10, 10, 29, RED);
-            Vector2 posStart = (Vector2){self->screen_dim.x/2-10, self->screen_dim.y-18};
-            Vector2 tamanho = (Vector2){32,12};
-            DrawText("Start", posStart.x+2, posStart.y+2, 10, LIGHTGRAY);
+                DrawTextureRec(self->start_texture, (Rectangle){0,0,self->screen_dim.x,self->screen_dim.y}, (Vector2){0.f,0.f}, (Color){255,255,255,255});
+                DrawText("Voaqueiro", 10, 10, 29, RED);
+                Vector2 posStart = (Vector2){self->screen_dim.x/2-10, self->screen_dim.y-18};
+                Vector2 tamanho = (Vector2){32,12};
+                DrawText("Start", posStart.x+2, posStart.y+2, 10, LIGHTGRAY);
 
-            Color cor_botao_start = (Color){100,100,100,200};
-            if (CheckCollisionPointRec(pos_to_texture(GetMousePosition(), self->screen_dim, self->window_dim, self->scaled_screen_dim), 
-                (Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y})) {
-                cor_botao_start = (Color){150,150,150,200};
-            }
-            DrawRectangleRounded((Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y}, 0.1, 1, cor_botao_start);
-            DrawRectangleRoundedLinesEx((Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y}, 0.1, 0, 1, (Color){255,255,255,255});
+                Color cor_botao_start = (Color){100,100,100,200};
+                if (CheckCollisionPointRec(pos_to_texture(GetMousePosition(), self->screen_dim, self->window_dim, self->scaled_screen_dim), 
+                    (Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y})) {
+                    cor_botao_start = (Color){150,150,150,200};
+                }
+                DrawRectangleRounded((Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y}, 0.1, 1, cor_botao_start);
+                DrawRectangleRoundedLinesEx((Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y}, 0.1, 0, 1, (Color){255,255,255,255});
             break;
             
             default:
@@ -268,6 +273,9 @@ void menu_update(Menu *self, GameContext *g)
             if (GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
                 self->game->stage = RUNNING;
                 StopMusicStream(self->au_lib.start_music);
+                if (!IsAudioDeviceReady()) {
+                    InitAudioDevice();
+                }
                 PlayMusicStream(self->au_lib.background_music);
             }
             break;

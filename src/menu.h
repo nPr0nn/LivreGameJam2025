@@ -57,6 +57,7 @@ typedef struct {
     float gamma;
     int moving_slider;
     GameContext *game;
+    Texture start_texture;
 
 } Menu;
 

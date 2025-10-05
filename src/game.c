@@ -71,7 +71,7 @@ void game_init(void *ctx) {
   Image background_image = LoadImage("images/background.png");
   g->background = LoadTextureFromImage(background_image);
   UnloadImage(background_image);
-  g->level_data = load_level_data("images/levels/map.json", g->g_arena);
+  g->level_data = load_level_data("images/levels/2_caverna.json", g->g_arena);
   level_init(g->level_data);
   
   // --- Entities Init ---
