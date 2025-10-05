@@ -218,9 +218,8 @@
   {"tile": "images/solograma.png", "x": 80, "y": 99, "w": 20, "h": 1}
 ],
 "collisions": [
-  {"type": "solid", "id": 0, "x": 0, "y": 55, "w": 100, "h": 1},
-  {"type": "solid", "id": 0, "x": 0, "y": 56, "w": 1, "h": 44},
-  {"type": "solid", "id": 0, "x": 99, "y": 56, "w": 1, "h": 34},
+  {"type": "solid", "id": 0, "x": 0, "y": 0, "w": 1, "h": 100},
+  {"type": "solid", "id": 0, "x": 99, "y": 0, "w": 1, "h": 90},
   {"type": "solid", "id": 0, "x": 19, "y": 69, "w": 12, "h": 1},
   {"type": "solid", "id": 0, "x": 19, "y": 70, "w": 1, "h": 17},
   {"type": "solid", "id": 0, "x": 30, "y": 70, "w": 1, "h": 20},
