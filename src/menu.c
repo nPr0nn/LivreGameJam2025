@@ -198,16 +198,19 @@ void define_all_sounds_volume(Menu *menu, float volume) {
 }
 
 void action_button(Button *self, Menu *menu) {
-  switch (self->button_type) {
-  case MUSIC:
-    if (self->pressed) {
-      PauseMusicStream(menu->au_lib.background_music);
-      PauseMusicStream(menu->au_lib.start_music);
-    } else {
+    switch (self->button_type) {
+        case MUSIC:
+        if (self->pressed) {
+            PauseMusicStream(menu->au_lib.background_music);
+            PauseMusicStream(menu->au_lib.start_music);
+        } else {
       if (menu->game->stage == START)
-        ResumeMusicStream(menu->au_lib.background_music);
-      if (menu->game->stage == RUNNING)
         ResumeMusicStream(menu->au_lib.start_music);
+      if (menu->game->stage == RUNNING || menu->game->stage == PAUSED)
+      {
+          ResumeMusicStream(menu->au_lib.background_music);
+
+      }
     }
 
     // float volume = 1.0f;
