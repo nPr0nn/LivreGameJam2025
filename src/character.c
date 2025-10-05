@@ -16,14 +16,13 @@ typedef enum {
 #define RUN_SPEED_MULTIPLIER 1.8f
 #define RUN_SPRITE_TILT 10.0f
 
-void character_init(Character *ch, Vector2 start_pos, float radius,
-                    Color color) {
+void character_init(Character *ch, Vector2 start_pos, Color color) {
   ch->en.owner = (void *)ch;
   ch->en.pos = start_pos;
   ch->en.vel = (Vector2){0};
   ch->en.acc = (Vector2){0};
 
-  ch->ground_height = start_pos.y + 100.0f;
+  ch->ground_height = start_pos.y;
 
   Image sprite_sheet_image = LoadImage("images/voaqueiro.png");
   ch->sprite_sheet = LoadTextureFromImage(sprite_sheet_image);
@@ -232,7 +231,8 @@ void character_update(Character *ch, ParticleSystem *particle_system, float dt,
   if (ch->is_running && ch->is_grounded && fabs(ch->en.vel.x) > 0) {
     ch->sprite_rotation =
         ch->is_look_right ? -RUN_SPRITE_TILT : RUN_SPRITE_TILT;
-    Vector2 feet_pos = {ch->en.pos.x, ch->en.pos.y + ch->en.bbox.height / 2};
+    Vector2 feet_pos = {ch->en.pos.x + ch->en.bbox.width / 2,
+                        ch->en.pos.y + ch->en.bbox.height};
     ParticleDefinition def = (ParticleDefinition){
         .pos = feet_pos,
         .vel = (Vector2){get_random_float(-40.0f, 40.0f),
@@ -249,12 +249,6 @@ void character_update(Character *ch, ParticleSystem *particle_system, float dt,
 
   ch->en.bbox.x = ch->en.pos.x;
   ch->en.bbox.y = ch->en.pos.y;
-
-  if (ch->en.pos.y > ch->ground_height) {
-    ch->en.pos.y = ch->ground_height;
-    ch->en.vel.y = 0;
-    ch->is_grounded = true;
-  }
 }
 
 void character_draw(const Character *ch, ShaderManager *sm) {
@@ -262,8 +256,8 @@ void character_draw(const Character *ch, ShaderManager *sm) {
   Rectangle source_rec = {(float)ch->current_frame * ch->frame_width,
                           (float)ch->current_state * ch->frame_height,
                           flip * ch->frame_width, ch->frame_height};
-
-  Rectangle dest_rec = {ch->en.pos.x, ch->en.pos.y, ch->frame_width,
+  Rectangle dest_rec = {ch->en.pos.x + ch->frame_width / 2 - 1,
+                        ch->en.pos.y + ch->frame_height / 2, ch->frame_width,
                         ch->frame_height};
   Vector2 origin = {ch->frame_width / 2.0f, ch->frame_height / 2.0f};
 

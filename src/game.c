@@ -66,23 +66,8 @@ void game_init(void *ctx) {
   level_init(g->level_data);
 
   // --- Entities Init ---
-  Vector2 player_initial_pos = level_get_player_position(g->level_data);
-  character_init(&g->player, player_initial_pos, 8, BLUE);
-
-  // enemy_init(&g->enemy, (Vector2){100, 0}, 30.0f);
-
-  // i32 num_object = 100;
-  // g->collision_rects =
-  //     mem_arena_alloc(g->g_arena, num_object * sizeof(Rectangle));
-  // g->collision_rects[0] = (Rectangle){20, 0, 16, 16};
-  // g->collision_rects[1] = (Rectangle){40, 0, 16, 16};
-  // g->collision_rects[2] = (Rectangle){60, 0, 20, 20};
-  // g->collision_rects[3] = (Rectangle){-20, 0, 20, 20};
-  // g->collision_rects[4] = (Rectangle){80, 0, 20, 20};
-  // g->collision_rects[5] = (Rectangle){140, -30, 20, 20};
-  // g->collision_rects[6] = (Rectangle){160, -40, 20, 20};
-  //
-  // g->collision_rects_count = 7;
+  g->anchor = level_get_player_position(g->level_data);
+  character_init(&g->player, g->anchor, BLUE);
 }
 
 void game_draw(void *ctx) {
@@ -109,6 +94,7 @@ void game_draw(void *ctx) {
   ClearBackground((Color){237, 165, 63, 255});
   BeginMode2D(g->camera);
 
+  // scrolling.
   float bg_scale = 0.4f;
   float parallax_factor =
       0.5f; // How much slower the background scrolls (0.5 = 50% speed)
@@ -126,7 +112,7 @@ void game_draw(void *ctx) {
   Rectangle dest_rec = {
       g->camera.target.x -
           (target_width / 2.0f), // Align with the left edge of the camera
-      -250.0f,                   // Your original Y position
+      g->anchor.y - 250,         // Your original Y position
       (float)target_width,       // Match the camera's width
       (float)g->background.height * bg_scale};
 
@@ -137,6 +123,10 @@ void game_draw(void *ctx) {
 
   // Draw THE WORLD
   level_draw(g->level_data, g->player.en.pos);
+
+  // for (int i = 0; i < g->level_data->collision_count; i++) {
+  //   DrawRectangleLinesEx(g->collision_rects[i], 20, BLUE);
+  // }
 
   character_draw(&g->player, &g->shader_manager);
   particle_system_draw(g->particle_system);
@@ -220,10 +210,8 @@ void game_update(void *ctx) {
   run_collisions_on_entity(&g->player.en, g->level_data->collisions,
                            g->level_data->collision_count, dt,
                            character_on_collision);
-
   character_update(&g->player, g->particle_system, dt, g->is_paused);
   particle_system_update(g->particle_system, dt);
-
   enemy_update(&g->enemy, dt);
 }
 

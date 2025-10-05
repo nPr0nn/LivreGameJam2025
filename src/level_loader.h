@@ -82,8 +82,7 @@ static inline void level_draw(LevelData *level_data, Vector2 player_pos) {
     // This is the FPS fix from last time, ensuring one draw call per tile.
     for (int y = start_y; y < end_y; y += TILE_SIZE) {
       for (int x = start_x; x < end_x; x += TILE_SIZE) {
-        DrawTexture(level_data->tiles[i].sprite, x - TILE_SIZE / 2,
-                    y - TILE_SIZE / 2, WHITE);
+        DrawTexture(level_data->tiles[i].sprite, x, y, WHITE);
       }
     }
   }
@@ -112,7 +111,7 @@ static inline void level_draw(LevelData *level_data, Vector2 player_pos) {
     i32 y = level_data->collisions[i].y;
     i32 w = level_data->collisions[i].w;
     i32 h = level_data->collisions[i].h;
-    DrawRectangleLines(x - TILE_SIZE / 2, y - TILE_SIZE / 2, w, h, RED);
+    DrawRectangleLines(x, y, w, h, RED);
   }
 }
 
@@ -150,7 +149,7 @@ static inline Vector2 level_get_player_position(LevelData *level_data) {
   for (int i = 0; i < level_data->tile_count; i++) {
     t_Tile tile = level_data->tiles[i];
     if (strcmp(tile.tile, "images/voaqueiro.png") == 0) {
-      return (Vector2){(f32)tile.x - TILE_SIZE / 2.0f + 30,
+      return (Vector2){(f32)tile.x - TILE_SIZE / 2.0f,
                        (f32)tile.y - TILE_SIZE / 2.0f};
     }
   }

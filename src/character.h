@@ -54,8 +54,7 @@ typedef struct Character {
 
 } Character;
 
-void character_init(Character *ch, Vector2 start_pos, float radius,
-                    Color color);
+void character_init(Character *ch, Vector2 start_pos, Color color);
 void character_pre_update(Character *ch, ParticleSystem *ps, float dt,
                           bool is_paused);
 void character_update(Character *ch, ParticleSystem *ps, float dt,

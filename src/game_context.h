@@ -26,6 +26,7 @@ typedef struct GameContext {
   ParticleSystem *particle_system;
 
   // Map
+  Vector2 anchor;
   Font western_font;
   Texture2D background;
   LevelData *level_data;
