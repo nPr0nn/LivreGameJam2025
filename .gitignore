@@ -2,6 +2,7 @@
 target/desktop/*
 target/web/*
 build
+build_editor
 
 # Prerequisites
 *.d

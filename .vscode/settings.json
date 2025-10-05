@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "game_context.h": "c",
-        "raylib.h": "c",
-        "cmath": "cpp",
-        "stdio.h": "c",
-        "slc.h": "c"
-    }
-}
