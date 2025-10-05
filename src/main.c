@@ -1,6 +1,5 @@
 
 #include "game.h"
-#define SLC_IMPL
 #include "game_context.h"
 
 typedef void (*void_func_ptr)(void *);
@@ -12,6 +11,7 @@ void set_application_loop(void *ctx, void_func_ptr game_loop) {
 #else
 void set_application_loop(void *ctx, void_func_ptr game_loop) {
   while (!WindowShouldClose()) {
+    WindowShouldClose();
     game_loop(ctx);
   }
 }
