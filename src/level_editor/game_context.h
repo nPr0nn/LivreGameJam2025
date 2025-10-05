@@ -7,7 +7,7 @@
 #include "../../vendor/slc.h"
 
 #define NUM_TILES 128
-#define TILE_SIZE 32
+#define TILE_SIZE 16
 
 #define MAP_W 100
 #define MAP_H 100

@@ -14,14 +14,21 @@
 
 #define MAX_EDITOR_OPTIONS 10
 
+// Forward declaration so we can call reload_map in game_init
+static void reload_map(GameContext *g, const char *file_path);
+
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
 
 #ifndef PLATFORM_WEB
-  i32 current_monitor_id = GetCurrentMonitor();
-  i32 monitor_width = GetMonitorWidth(current_monitor_id);
-  i32 monitor_height = GetMonitorHeight(current_monitor_id);
-  f32 scale = 0.5;
+  // NOTE:
+  // Don't call GetCurrentMonitor() before a window exists - it queries the
+  // window position which will call glfwGetWindowPos(platform.handle) and
+  // crash if platform.handle is NULL. Use the primary monitor (0) to query
+  // a safe default size instead.
+  i32 monitor_width = GetMonitorWidth(0);
+  i32 monitor_height = GetMonitorHeight(0);
+  f32 scale = 0.5f;
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow((i32)(scale * monitor_width), (i32)(scale * monitor_height),
              "Livre GameJam");
@@ -69,6 +76,9 @@ void game_init(void *ctx) {
   
   g->camera = (Camera2D){{0, 0}, {0, 0}, 0.0, 1.0};
   g->pos = (Vector2){0, 0};
+  
+  // Try loading the existing map on startup so F9 behavior can be observed
+  reload_map(g, "assets/maps/map.json");
 }
 
 // Reload a map saved by the editor (assets/maps/map.json)
@@ -89,6 +99,12 @@ static void reload_map(GameContext *g, const char *file_path) {
     return;
   }
 
+  // Ensure level data uses pixel coordinates (level_init multiplies by TILE_SIZE)
+  level_init(level);
+
+  // Debug: report tiles found and whether they map to editor paths
+  printf("Reloading map: found %zu tiles, %zu collisions\n", level->tile_count, level->collision_count);
+
   // Convert LevelData tiles (which are in pixels after level_init)
   // into the editor's per-cell grid representation.
   for (usize i = 0; i < level->tile_count; i++) {
@@ -100,7 +116,13 @@ static void reload_map(GameContext *g, const char *file_path) {
     for (int p = 0; p < g->paths_count; p++) {
       if (g->paths[p].data && strcmp(g->paths[p].data, t->tile) == 0) { idx = p; break; }
     }
-    if (idx == -1) continue;
+    if (idx == -1) {
+      printf("  Tile not found in editor paths: %s\n", t->tile);
+      continue;
+    } else {
+      if (level->tile_count < 50) // avoid extremely verbose logs
+        printf("  Tile %d -> path index %d (%s)\n", (int)i, idx, g->paths[idx].data);
+    }
 
     int start_x = t->x / TILE_SIZE;
     int start_y = t->y / TILE_SIZE;
@@ -144,6 +166,14 @@ static void reload_map(GameContext *g, const char *file_path) {
   }
 
   printf("Map reloaded from %s\n", file_path);
+
+  // Try to center editor on the player start if present in the level
+  Vector2 player_pos = level_get_player_position(level);
+  if (player_pos.x > -9998.0f) {
+    // level_get_player_position returns pixel coords (level_init applied TILE_SIZE)
+    g->pos = player_pos;
+    g->camera.target = g->pos;
+  }
 }
 
 void game_draw(void *ctx) {
