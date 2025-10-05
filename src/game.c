@@ -19,6 +19,11 @@ Vector2 get_world_pos_in_texture(GameContext *g, Vector2 world_pos) {
 
 void next_level(GameContext *g, int level) {
 
+  if(level ==5)
+  {
+    g->stage = WIN;
+    return;
+  }
   char background_path[128];
   snprintf(background_path, sizeof(background_path), "images/background%d.jpeg",
            level);
@@ -270,6 +275,7 @@ void game_update(void *ctx) {
 
     if (g->player.is_dead) {
       g->stage = LOSE;
+      g->progression = 0;
     }
     if (g->player.go_next_level) {
       g->progression += 1;
