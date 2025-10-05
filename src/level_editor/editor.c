@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <stdlib.h>
 #ifdef _WIN32
 #include <direct.h>
 #endif
@@ -67,6 +68,161 @@ void game_init(void *ctx) {
   
   g->camera = (Camera2D){{0, 0}, {0, 0}, 0.0, 1.0};
   g->pos = (Vector2){0, 0};
+}
+
+// Reload a map saved by the editor (assets/maps/map.json)
+static void reload_map(GameContext *g, const char *file_path) {
+  // reset map and collisions
+  for (int x = 0; x < MAP_W; x++) {
+    for (int y = 0; y < MAP_H; y++) {
+      g->map[x][y] = -1;
+      g->collision_type[x][y] = 0;
+      g->collision_id[x][y] = 0;
+    }
+  }
+
+  FILE *f = fopen(file_path, "rb");
+  if (!f) {
+    // no file to load
+    return;
+  }
+
+  fseek(f, 0, SEEK_END);
+  long sz = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  char *buf = (char *)malloc((size_t)sz + 1);
+  if (!buf) { fclose(f); return; }
+  fread(buf, 1, (size_t)sz, f);
+  buf[sz] = '\0';
+  fclose(f);
+
+  // --- Parse "tiles" array ---
+  char *tiles_key = strstr(buf, "\"tiles\"");
+  if (tiles_key) {
+    char *arr = strchr(tiles_key, '[');
+    if (arr) {
+      char *p = arr + 1;
+      while (1) {
+        char *obj = strchr(p, '{');
+        if (!obj) break;
+        char *obj_end = strchr(obj, '}');
+        if (!obj_end) break;
+
+        // extract tile path string
+        char tile_path[256] = {0};
+        char *k = strstr(obj, "\"tile\"");
+        if (k && k < obj_end) {
+          char *q = strchr(k, ':');
+          if (q && q < obj_end) {
+            char *quote = strchr(q, '"');
+            if (quote && quote < obj_end) {
+              quote++;
+              char *quote_end = strchr(quote, '"');
+              if (quote_end && quote_end <= obj_end) {
+                size_t len = (size_t)(quote_end - quote);
+                if (len >= sizeof(tile_path)) len = sizeof(tile_path) - 1;
+                memcpy(tile_path, quote, len);
+                tile_path[len] = '\0';
+              }
+            }
+          }
+        }
+
+        int x = 0, y = 0, w = 1, h = 1;
+        char *xk = strstr(obj, "\"x\""); if (xk && xk < obj_end) sscanf(xk, "\"x\"%*[^0-9-]%d", &x);
+        char *yk = strstr(obj, "\"y\""); if (yk && yk < obj_end) sscanf(yk, "\"y\"%*[^0-9-]%d", &y);
+        char *wk = strstr(obj, "\"w\""); if (wk && wk < obj_end) sscanf(wk, "\"w\"%*[^0-9-]%d", &w);
+        char *hk = strstr(obj, "\"h\""); if (hk && hk < obj_end) sscanf(hk, "\"h\"%*[^0-9-]%d", &h);
+
+        if (tile_path[0] != '\0') {
+          // find matching path in g->paths
+          int idx = -1;
+          for (int i = 0; i < g->paths_count; i++) {
+            if (g->paths[i].data && strcmp(g->paths[i].data, tile_path) == 0) { idx = i; break; }
+          }
+          if (idx != -1) {
+            for (int ix = x; ix < x + w; ix++) {
+              for (int iy = y; iy < y + h; iy++) {
+                if (ix >= 0 && iy >= 0 && ix < MAP_W && iy < MAP_H) g->map[ix][iy] = idx;
+              }
+            }
+          }
+        }
+
+        p = obj_end + 1;
+        char *next_arr_end = strchr(p, ']');
+        if (!next_arr_end) continue;
+        char *next_obj = strchr(p, '{');
+        if (!next_obj || next_arr_end < next_obj) break;
+      }
+    }
+  }
+
+  // --- Parse "collisions" array ---
+  char *coll_key = strstr(buf, "\"collisions\"");
+  if (coll_key) {
+    char *arr = strchr(coll_key, '[');
+    if (arr) {
+      char *p = arr + 1;
+      while (1) {
+        char *obj = strchr(p, '{');
+        if (!obj) break;
+        char *obj_end = strchr(obj, '}');
+        if (!obj_end) break;
+
+        char type_buf[32] = {0};
+        char *tk = strstr(obj, "\"type\"");
+        if (tk && tk < obj_end) {
+          char *q = strchr(tk, ':');
+          if (q && q < obj_end) {
+            char *quote = strchr(q, '"');
+            if (quote && quote < obj_end) {
+              quote++;
+              char *quote_end = strchr(quote, '"');
+              if (quote_end && quote_end <= obj_end) {
+                size_t len = (size_t)(quote_end - quote);
+                if (len >= sizeof(type_buf)) len = sizeof(type_buf) - 1;
+                memcpy(type_buf, quote, len);
+                type_buf[len] = '\0';
+              }
+            }
+          }
+        }
+
+        int id = 0;
+        char *idk = strstr(obj, "\"id\""); if (idk && idk < obj_end) sscanf(idk, "\"id\"%*[^0-9-]%d", &id);
+        int x = 0, y = 0, w = 1, h = 1;
+        char *xk2 = strstr(obj, "\"x\""); if (xk2 && xk2 < obj_end) sscanf(xk2, "\"x\"%*[^0-9-]%d", &x);
+        char *yk2 = strstr(obj, "\"y\""); if (yk2 && yk2 < obj_end) sscanf(yk2, "\"y\"%*[^0-9-]%d", &y);
+        char *wk2 = strstr(obj, "\"w\""); if (wk2 && wk2 < obj_end) sscanf(wk2, "\"w\"%*[^0-9-]%d", &w);
+        char *hk2 = strstr(obj, "\"h\""); if (hk2 && hk2 < obj_end) sscanf(hk2, "\"h\"%*[^0-9-]%d", &h);
+
+        int type = 0;
+        if (strcmp(type_buf, "solid") == 0) type = 1;
+        else if (strcmp(type_buf, "death") == 0) type = 2;
+        else if (strcmp(type_buf, "trigger") == 0) type = 3;
+
+        for (int ix = x; ix < x + w; ix++) {
+          for (int iy = y; iy < y + h; iy++) {
+            if (ix >= 0 && iy >= 0 && ix < MAP_W && iy < MAP_H) {
+              g->collision_type[ix][iy] = type;
+              g->collision_id[ix][iy] = id;
+            }
+          }
+        }
+
+        p = obj_end + 1;
+        char *next_arr_end = strchr(p, ']');
+        if (!next_arr_end) continue;
+        char *next_obj = strchr(p, '{');
+        if (!next_obj || next_arr_end < next_obj) break;
+      }
+    }
+  }
+
+  free(buf);
+  // Informative print for debug
+  printf("Map reloaded from %s\n", file_path);
 }
 
 void game_draw(void *ctx) {
@@ -479,6 +635,11 @@ void game_update(void *ctx) {
   }
 
   if (g->save_flash_counter > 0) g->save_flash_counter--;
+
+  // Reload map from disk (press F9)
+  if (IsKeyPressed(KEY_F9)) {
+    reload_map(g, "assets/maps/map.json");
+  }
 
   // Other stuff
   Vector2 screen_mouse_pos = GetMousePosition();
