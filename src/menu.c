@@ -126,12 +126,12 @@ void menu_draw(Menu *self) {
   case PAUSED:
     DrawRectangle(
         0, 0, self->screen_dim.x, self->screen_dim.y,
-        (Color){0, 0, 0, 200}); // deixa o fundo mais escuro quando pausado
+        (Color){0, 0, 0, 100}); // deixa o fundo mais escuro quando pausado
     Rectangle rec =
         (Rectangle){5, 5, self->screen_dim.x - 10, self->screen_dim.y - 10};
     Color color = (Color){255, 255, 255, 255};
     DrawRectangleRoundedLinesEx(rec, 0.05, 0, 2, color);
-    DrawRectangleRounded(rec, 0.05, 1, (Color){100, 100, 100, 230});
+    DrawRectangleRounded(rec, 0.05, 1, (Color){100, 100, 100, 50});
 
     for (int i = 0; i < self->n_buttons; i++) {
       button_draw(&self->buttons[i]);
@@ -180,13 +180,13 @@ void menu_draw(Menu *self) {
 
     DrawTextureRec(self->lose_texture, (Rectangle){0,0,self->screen_dim.x,self->screen_dim.y}, (Vector2){0.f,0.f}, (Color){255,255,255,255});
     DrawText("Você perdeu :( ", 10, 10, 18, RED);
-    DrawText("Aperte qualquer coisa \n para recomecar", 20, 70, 10, LIGHTGRAY);
+    DrawText("Aperte C \n para recomecar", 20, 70, 10, LIGHTGRAY);
     break;
     case WIN:
 
     DrawTextureRec(self->start_texture, (Rectangle){0,0,self->screen_dim.x,self->screen_dim.y}, (Vector2){0.f,0.f}, (Color){255,255,255,255});
     DrawText("Você ganhou! :) ", 10, 10, 18, GREEN);
-    DrawText("Aperte qualquer coisa \n para recomecar", 20, 70, 10, LIGHTGRAY);
+    DrawText("Aperte C \n para recomecar", 20, 70, 10, LIGHTGRAY);
     break;
   default:
     break;
@@ -305,8 +305,8 @@ void menu_update(Menu *self, GameContext *g) {
     break;
 
   case START:
-    if (GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ||
-        IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+    if ((GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ||
+        IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))) {
       self->game->stage = RUNNING;// RUNNING
       StopMusicStream(self->au_lib.start_music);
       if (!IsAudioDeviceReady()) {
@@ -316,16 +316,14 @@ void menu_update(Menu *self, GameContext *g) {
     }
     break;
   case LOSE:
-    if (GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ||
-        IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+    if (IsKeyPressed(KEY_C)) {
       self->game->stage = RUNNING;
       next_level(g, 1);
     }
     break;
     
     case WIN:
-    if (GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ||
-        IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+    if (IsKeyPressed(KEY_C)) {
       self->game->stage = START;
     }
     break;
