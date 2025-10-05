@@ -8,7 +8,6 @@
 #include "game_context.h"
 #include "level_loader.h"
 #include "utils.h"
-#include "map_loader.h"
 
 Vector2 get_world_pos_in_texture(GameContext *g, Vector2 world_pos) {
   Vector2 screen_pos = GetWorldToScreen2D(world_pos, g->camera);
@@ -43,9 +42,6 @@ void game_init(void *ctx) {
   SetTextureFilter(g->screen.texture,
                    TEXTURE_FILTER_POINT); // pixel-perfect scaling
   SetTargetFPS(60);
-  
-  // --- Load map ---
-  load_map(g, "assets/maps/map.json");
 
   // --- Camera setup (in retro coordinate space) ---
   g->camera =
