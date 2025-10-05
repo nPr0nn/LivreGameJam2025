@@ -95,26 +95,29 @@ int hover_button(Button *self, Vector2 screen_dim, Vector2 window_dim, Vector2 s
 
 void menu_draw(Menu *self)
 {
-Rectangle rec = (Rectangle){5, 5, self->screen_dim.x-10,self->screen_dim.y-10};
-Color color = (Color){255,255,255,255};
-DrawRectangleRoundedLinesEx(rec, 0.05, 0, 2, color);
-DrawRectangleRounded(rec, 0.05, 1, (Color){100,100,100,230});
-
-    for(int i = 0; i<self->n_buttons;i++)
+    if(self->game->stage == PAUSED)
     {
-        button_draw(&self->buttons[i]);
+        Rectangle rec = (Rectangle){5, 5, self->screen_dim.x-10,self->screen_dim.y-10};
+        Color color = (Color){255,255,255,255};
+        DrawRectangleRoundedLinesEx(rec, 0.05, 0, 2, color);
+        DrawRectangleRounded(rec, 0.05, 1, (Color){100,100,100,230});
+        
+            for(int i = 0; i<self->n_buttons;i++)
+            {
+                button_draw(&self->buttons[i]);
+            }
+            for(int i = 0; i<self->n_buttons;i++)
+            {
+                slider_draw(&self->sliders[i]);
+            }
+        
+        //Exit
+        DrawText("Exit game", self->buttons[3].rec.x-57, self->buttons[3].rec.y+3, 10, RED);
+        
+        // Draw pause message if paused
+        DrawText("Game Paused", self->screen_dim.x/2-30, self->screen_dim.y-30, 10, RED);
+        DrawText("Press P to Resume", self->screen_dim.x/2-30-15, self->screen_dim.y-20, 10, LIGHTGRAY);
     }
-    for(int i = 0; i<self->n_buttons;i++)
-    {
-        slider_draw(&self->sliders[i]);
-    }
-
-//Exit
-DrawText("Exit game", self->buttons[3].rec.x-57, self->buttons[3].rec.y+3, 10, RED);
-
-// Draw pause message if paused
-DrawText("Game Paused", self->screen_dim.x/2-30, self->screen_dim.y-30, 10, RED);
-DrawText("Press P to Resume", self->screen_dim.x/2-30-15, self->screen_dim.y-20, 10, LIGHTGRAY);
 
 
 }
@@ -192,43 +195,45 @@ void action_slider(Slider *self, Menu *menu)
 
 void menu_update(Menu *self, GameContext *g)
 {
-    for(int i = 0; i<self->n_buttons;i++)
+    if(self->game->stage == PAUSED)
     {
-        if(hover_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
+        for(int i = 0; i<self->n_buttons;i++)
         {
-            self->buttons[i].bright = (Color){230,230,230,255};
-        }
-        else
-        {
-            self->buttons[i].bright = (Color){255,255,255,255};
-
-        }
-        if(detect_click_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
-        {
-            PlaySound(self->au_lib.bolha);
-            self->buttons[i].pressed = !self->buttons[i].pressed;
-            printf("%d\n", self->buttons[i].button_type);
-            action_button(&self->buttons[i], self);
-        }
-    }
-    for(int i = 0; i<self->n_sliders;i++)
-    {
-        if(detect_click_slider(&self->sliders[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
-        {
-            self->moving_slider = i;
-            PlaySound(self->au_lib.bolha);
-        }
-        
-        if(self->moving_slider == i)
-        {
-            action_slider(&self->sliders[i], self);
-            if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+            if(hover_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
             {
-                self->moving_slider = -1;
+                self->buttons[i].bright = (Color){230,230,230,255};
+            }
+            else
+            {
+                self->buttons[i].bright = (Color){255,255,255,255};
+
+            }
+            if(detect_click_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
+            {
+                PlaySound(self->au_lib.bolha);
+                self->buttons[i].pressed = !self->buttons[i].pressed;
+                printf("%d\n", self->buttons[i].button_type);
+                action_button(&self->buttons[i], self);
+            }
+        }
+        for(int i = 0; i<self->n_sliders;i++)
+        {
+            if(detect_click_slider(&self->sliders[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
+            {
+                self->moving_slider = i;
+                PlaySound(self->au_lib.bolha);
+            }
+            
+            if(self->moving_slider == i)
+            {
+                action_slider(&self->sliders[i], self);
+                if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                {
+                    self->moving_slider = -1;
+                }
             }
         }
     }
-
 
 }
 
