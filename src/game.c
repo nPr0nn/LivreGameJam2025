@@ -109,8 +109,6 @@ void game_draw(void *ctx) {
   ClearBackground((Color){237, 165, 63, 255});
   BeginMode2D(g->camera);
 
-  // NEW: Replace the old DrawTextureEx with DrawTextureTiled for infinite
-  // scrolling.
   float bg_scale = 0.4f;
   float parallax_factor =
       0.5f; // How much slower the background scrolls (0.5 = 50% speed)
@@ -138,7 +136,7 @@ void game_draw(void *ctx) {
   // --- End of new background drawing logic ---
 
   // Draw THE WORLD
-  level_draw(g->level_data);
+  level_draw(g->level_data, g->player.en.pos);
 
   character_draw(&g->player, &g->shader_manager);
   particle_system_draw(g->particle_system);
