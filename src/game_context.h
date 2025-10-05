@@ -2,6 +2,7 @@
 #define CONTEXT_H
 
 #include "../vendor/raylib/raylib.h"
+#include "level_loader.h"
 
 #define SLC_NO_LIB_PREFIX
 #include "../vendor/slc.h"
@@ -21,16 +22,13 @@ typedef struct GameContext {
   // Shader Manager
   ShaderManager shader_manager;
 
-  // Collisions Block
-  Rectangle *collision_rects;
-  i32 collision_rects_count;
-
   // Particle System
   ParticleSystem *particle_system;
 
   // Map
   Font western_font;
   Texture2D background;
+  LevelData *level_data;
 
   // Game
   RenderTexture screen;

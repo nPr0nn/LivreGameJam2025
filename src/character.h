@@ -13,6 +13,7 @@
 typedef struct Character {
   // Entity
   Entity en;
+  f32 ground_height;
 
   // Sprite and animation
   Texture2D sprite_sheet;

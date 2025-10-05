@@ -23,6 +23,8 @@ void character_init(Character *ch, Vector2 start_pos, float radius,
   ch->en.vel = (Vector2){0};
   ch->en.acc = (Vector2){0};
 
+  ch->ground_height = start_pos.y;
+
   Image sprite_sheet_image = LoadImage("images/voaqueiro.png");
   ch->sprite_sheet = LoadTextureFromImage(sprite_sheet_image);
   UnloadImage(sprite_sheet_image);
@@ -248,8 +250,8 @@ void character_update(Character *ch, ParticleSystem *particle_system, float dt,
   ch->en.bbox.x = ch->en.pos.x;
   ch->en.bbox.y = ch->en.pos.y;
 
-  if (ch->en.pos.y > 0) {
-    ch->en.pos.y = 0;
+  if (ch->en.pos.y > ch->ground_height) {
+    ch->en.pos.y = ch->ground_height;
     ch->en.vel.y = 0;
     ch->is_grounded = true;
   }

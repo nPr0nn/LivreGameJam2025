@@ -6,6 +6,7 @@
 #include "enemy.h"
 #include "game.h"
 #include "game_context.h"
+#include "level_loader.h"
 #include "utils.h"
 
 Vector2 get_world_pos_in_texture(GameContext *g, Vector2 world_pos) {
@@ -61,23 +62,27 @@ void game_init(void *ctx) {
   Image background_image = LoadImage("images/background.png");
   g->background = LoadTextureFromImage(background_image);
   UnloadImage(background_image);
+  g->level_data = load_level_data("images/levels/map.json", g->g_arena);
+  level_init(g->level_data);
 
   // --- Entities Init ---
-  character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
-  enemy_init(&g->enemy, (Vector2){100, 0}, 30.0f);
+  Vector2 player_initial_pos = level_get_player_position(g->level_data);
+  character_init(&g->player, player_initial_pos, 8, BLUE);
 
-  i32 num_object = 100;
-  g->collision_rects =
-      mem_arena_alloc(g->g_arena, num_object * sizeof(Rectangle));
-  g->collision_rects[0] = (Rectangle){20, 0, 16, 16};
-  g->collision_rects[1] = (Rectangle){40, 0, 16, 16};
-  g->collision_rects[2] = (Rectangle){60, 0, 20, 20};
-  g->collision_rects[3] = (Rectangle){-20, 0, 20, 20};
-  g->collision_rects[4] = (Rectangle){80, 0, 20, 20};
-  g->collision_rects[5] = (Rectangle){140, -30, 20, 20};
-  g->collision_rects[6] = (Rectangle){160, -40, 20, 20};
+  // enemy_init(&g->enemy, (Vector2){100, 0}, 30.0f);
 
-  g->collision_rects_count = 7;
+  // i32 num_object = 100;
+  // g->collision_rects =
+  //     mem_arena_alloc(g->g_arena, num_object * sizeof(Rectangle));
+  // g->collision_rects[0] = (Rectangle){20, 0, 16, 16};
+  // g->collision_rects[1] = (Rectangle){40, 0, 16, 16};
+  // g->collision_rects[2] = (Rectangle){60, 0, 20, 20};
+  // g->collision_rects[3] = (Rectangle){-20, 0, 20, 20};
+  // g->collision_rects[4] = (Rectangle){80, 0, 20, 20};
+  // g->collision_rects[5] = (Rectangle){140, -30, 20, 20};
+  // g->collision_rects[6] = (Rectangle){160, -40, 20, 20};
+  //
+  // g->collision_rects_count = 7;
 }
 
 void game_draw(void *ctx) {
@@ -101,7 +106,7 @@ void game_draw(void *ctx) {
 
   // --- Render to low-res texture ---
   BeginTextureMode(g->screen);
-  ClearBackground((Color){30, 30, 50, 255});
+  ClearBackground((Color){237, 165, 63, 255});
   BeginMode2D(g->camera);
 
   // NEW: Replace the old DrawTextureEx with DrawTextureTiled for infinite
@@ -132,17 +137,20 @@ void game_draw(void *ctx) {
 
   // --- End of new background drawing logic ---
 
+  // Draw THE WORLD
+  level_draw(g->level_data);
+
   character_draw(&g->player, &g->shader_manager);
   particle_system_draw(g->particle_system);
   enemy_draw(&g->enemy);
 
-  for (int i = 0; i < g->collision_rects_count; i++) {
-    Rectangle centered_rect = {
-        g->collision_rects[i].x - (g->collision_rects[i].width / 2.0f),
-        g->collision_rects[i].y - (g->collision_rects[i].height / 2.0f),
-        g->collision_rects[i].width, g->collision_rects[i].height};
-    DrawRectangleLinesEx(centered_rect, 20, BLUE);
-  }
+  // for (int i = 0; i < g->collision_rects_count; i++) {
+  //   Rectangle centered_rect = {
+  //       g->collision_rects[i].x - (g->collision_rects[i].width / 2.0f),
+  //       g->collision_rects[i].y - (g->collision_rects[i].height / 2.0f),
+  //       g->collision_rects[i].width, g->collision_rects[i].height};
+  //   DrawRectangleLinesEx(centered_rect, 20, BLUE);
+  // }
 
   EndMode2D();
   DrawText("O Voaqueiro: o Inicio", 5.0, 5.0, 5.0, WHITE);
@@ -218,9 +226,9 @@ void game_update(void *ctx) {
   }
 
   // --- Collision Resolution Loop ---
-  run_collisions_on_entity(&g->player.en, g->collision_rects,
-                           g->collision_rects_count, dt,
-                           character_on_collision);
+  // run_collisions_on_entity(&g->player.en, g->collision_rects,
+  //                          g->collision_rects_count, dt,
+  //                          character_on_collision);
 
   character_update(&g->player, g->particle_system, dt, g->is_paused);
   particle_system_update(g->particle_system, dt);
