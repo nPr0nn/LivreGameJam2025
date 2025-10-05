@@ -8,6 +8,7 @@
 #include "game_context.h"
 #include "level_loader.h"
 #include "utils.h"
+#include "map_loader.h"
 
 Vector2 get_world_pos_in_texture(GameContext *g, Vector2 world_pos) {
   Vector2 screen_pos = GetWorldToScreen2D(world_pos, g->camera);
