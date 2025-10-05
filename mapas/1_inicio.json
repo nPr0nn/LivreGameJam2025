@@ -73,9 +73,11 @@
   {"tile": "images/preda.png", "x": 90, "y": 20, "w": 10, "h": 7}
 ],
 "collisions": [
-  {"type": "solid", "id": 0, "x": 10, "y": 0, "w": 89, "h": 1},
+  {"type": "solid", "id": 0, "x": 94, "y": 0, "w": 1, "h": 2},
+  {"type": "solid", "id": 0, "x": 96, "y": 0, "w": 1, "h": 2},
+  {"type": "solid", "id": 0, "x": 98, "y": 0, "w": 1, "h": 2},
   {"type": "solid", "id": 0, "x": 10, "y": 1, "w": 1, "h": 16},
-  {"type": "solid", "id": 0, "x": 93, "y": 1, "w": 5, "h": 1},
+  {"type": "solid", "id": 0, "x": 93, "y": 1, "w": 6, "h": 1},
   {"type": "solid", "id": 0, "x": 92, "y": 2, "w": 2, "h": 1},
   {"type": "solid", "id": 0, "x": 92, "y": 3, "w": 1, "h": 15},
   {"type": "solid", "id": 0, "x": 91, "y": 6, "w": 2, "h": 9},
