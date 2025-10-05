@@ -80,7 +80,7 @@ void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim, 
     Image start_image = LoadImage("images/telainicio.png");
     self->start_texture = LoadTextureFromImage(start_image);
     UnloadImage(start_image);
-    Image lose_image = LoadImage("images/telainicio.png");
+    Image lose_image = LoadImage("images/gameover.png");
     self->lose_texture = LoadTextureFromImage(lose_image);
     UnloadImage(lose_image);
 }
@@ -145,6 +145,12 @@ void menu_draw(Menu *self)
                 DrawRectangleRoundedLinesEx((Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y}, 0.1, 0, 1, (Color){255,255,255,255});
             break;
             
+            case LOSE:
+            DrawTextureRec(self->lose_texture, (Rectangle){0,0,self->screen_dim.x,self->screen_dim.y}, (Vector2){0.f,0.f}, (Color){255,255,255,255});
+                DrawText("Você perdeu :( ", 10, 10, 29, RED);
+                Vector2 posStart = (Vector2){self->screen_dim.x/2-10, self->screen_dim.y-18};
+                DrawText("Aperte qualquer coisa \n para recomecar", 20, 10, 10, LIGHTGRAY);
+            break;
             default:
             break;
         }
@@ -275,22 +281,19 @@ void menu_update(Menu *self, GameContext *g)
         case START:
             if (GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
                 self->game->stage = RUNNING;
+                #ifndef PLATFORM_WEB
                 StopMusicStream(self->au_lib.start_music);
-                if (!IsAudioDeviceReady()) {
-                    InitAudioDevice();
-                }
+                #else
+                InitAudioDevice();
+                au_lib_init(self);
+                printf("OOOOOOOOOO\n");
+                #endif
                 PlayMusicStream(self->au_lib.background_music);
             }
             break;
         case LOSE:
             if (GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
                 self->game->stage = RUNNING;
-                StopMusicStream(self->au_lib.start_music);
-                #ifdef PLATFORM_WEB
-                InitAudioDevice();
-                #endif
-
-                PlayMusicStream(self->au_lib.background_music);
             }
             break;
 
