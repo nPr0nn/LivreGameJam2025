@@ -57,7 +57,8 @@ void game_init(void *ctx) {
   g->particle_system = particle_system_create(g->g_arena, 1000);
 
   // --- Map Init ---
-  // g->western_font = LoadFont("images/PublicPixel.ttf");
+  g->western_font = LoadFont("images/PublicPixel.ttf");
+
   Image background_image = LoadImage("images/background.png");
   g->background = LoadTextureFromImage(background_image);
   UnloadImage(background_image);
@@ -145,7 +146,9 @@ void game_draw(void *ctx) {
   }
 
   EndMode2D();
-  DrawText("O Voaqueiro: o Inicio", 5.0, 5.0, 5.0, WHITE);
+  // DrawText("O Voaqueiro: o Inicio", 10, 10, 5.0, WHITE);
+  DrawTextEx(g->western_font, "O Voaqueiro: \n o Inicio", (Vector2){5, 5}, 6.0f,
+             0.5f, WHITE);
 
   EndTextureMode();
   // --- Draw final texture to screen (logic remains the same) ---
@@ -156,7 +159,7 @@ void game_draw(void *ctx) {
     BeginShaderMode(g->shader_manager.ripple_shader);
   } else {
     if (!g->is_paused) {
-      BeginShaderMode(g->shader_manager.glitch_shader);
+      BeginShaderMode(g->shader_manager.spotlight_shader);
     }
   }
 
@@ -197,10 +200,11 @@ void game_update(void *ctx) {
 
     if (!g->is_paused) {
       const float HORIZONTAL_MOMENTUM_THRESHOLD = 150.0f;
+      const float VERTICAL_MOMENTUM_THRESHOLD = 100.0f;
 
       // Check if the player has enough momentum to trigger the ripple
       if (fabs(g->player.en.vel.x) >= HORIZONTAL_MOMENTUM_THRESHOLD ||
-          g->player.jump_velocity_modifier >= 1.5) {
+          fabs(g->player.en.vel.y) >= VERTICAL_MOMENTUM_THRESHOLD) {
         trigger_ripple(&g->shader_manager, g->shader_manager.spotlight_center);
       }
     }

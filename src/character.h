@@ -2,24 +2,34 @@
 #define CHARACTER_H
 
 #include "../vendor/raylib/raylib.h"
+#include "collision_system.h"
+#include "entity.h"
+#include "particle_system.h"
+#include "shader_manager.h"
 
 #define COYOTE_TIME_SECONDS 0.01f
 #define JUMP_BUFFER_SECONDS 0.05f
 
 typedef struct Character {
   // Entity
-  Vector2 pos;
-  Vector2 vel;
-  Vector2 acc;
-  Rectangle bbox;
+  Entity en;
 
   // Sprite and animation
   Texture2D sprite_sheet;
-  int animate_time;
-  int current_animate_time;
-  int animate_decay_rate;
+
+  int num_states;
   int num_frames;
   int current_frame;
+  int current_state;
+
+  int total_run_animation_time;
+  int current_run_animation_time;
+  int run_animation_decay_rate;
+
+  int total_jump_animation_time;
+  int current_jump_animation_time;
+  int jump_animation_decay_rate;
+
   float frame_height;
   float frame_width;
   bool is_look_right;
@@ -35,16 +45,24 @@ typedef struct Character {
   float coyote_timer;
   float jump_buffer_timer;
 
+  // JUICE: Running state
+  bool is_running;
+  float sprite_rotation;
+  double last_left_press_time;
+  double last_right_press_time;
+
 } Character;
 
 void character_init(Character *ch, Vector2 start_pos, float radius,
                     Color color);
-void character_pre_update(Character *ch, float dt, bool is_paused);
-void character_update(Character *ch, float dt, bool is_paused);
+void character_pre_update(Character *ch, ParticleSystem *ps, float dt,
+                          bool is_paused);
+void character_update(Character *ch, ParticleSystem *ps, float dt,
+                      bool is_paused);
 void character_read_input(Character *ch, bool is_paused);
-void character_draw(const Character *ch);
+void character_draw(const Character *ch, ShaderManager *sm);
 
-void character_on_collision_detection();
-void character_on_collision_resolution();
+void character_on_collision(void *entity, const CollisionInfo *collision_info,
+                            float dt);
 
 #endif // CHARACTER_H

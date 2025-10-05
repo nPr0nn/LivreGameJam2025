@@ -2,6 +2,7 @@
 #define COLLISION_SYSTEM_H
 
 #include "../vendor/raylib/raylib.h"
+#include "entity.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -112,52 +113,51 @@ static inline bool check_collision_entity_bbox(Ray2D *mov, Rectangle *bbox_mov,
   return false;
 }
 
-// static inline void resolve_collisions_entity_bbox(
-//     Rectangle *entity_bbox, Vector2 *pos, Vector2 *vel,
-//     Rectangle *static_colliders, int collider_count, float dt, void *entity,
-//     void *user_data, CollisionDetectedCallback on_detected,
-//     CollisionResolveCallback on_resolve) {
-//
-//   // We might collide multiple times, so we iterate to resolve complex cases
-//   // (like sliding into a corner).
-//   for (int i = 0; i < 4; i++) {
-//     // 1. Find the EARLIEST collision for this frame's movement
-//     Ray2D movement_ray = {*pos, (Vector2){vel->x * dt, vel->y * dt}};
-//
-//     CollisionInfo nearest_collision = {
-//         .t_hit = 1.0f}; // Assume no collision initially
-//     int nearest_collider_index = -1;
-//     bool did_collide = false;
-//
-//     for (int j = 0; j < collider_count; j++) {
-//       CollisionInfo current_collision;
-//       if (check_collision_entity_bbox(&movement_ray, entity_bbox,
-//                                       &static_colliders[j],
-//                                       &current_collision)) {
-//         if (current_collision.t_hit < nearest_collision.t_hit) {
-//           nearest_collision = current_collision;
-//           nearest_collider_index = j;
-//           did_collide = true;
-//         }
-//       }
-//     }
-//
-//     // 2. If a collision was found, trigger the callbacks
-//     if (did_collide) {
-//       // A. Trigger the simple "detection" callback if it exists
-//       if (on_detected) {
-//         on_detected(entity, &nearest_collision, user_data);
-//       }
-//
-//       // B. Trigger the "resolution" callback to handle the physics
-//       if (on_resolve) {
-//         on_resolve(entity, &nearest_collision, pos, vel, dt, user_data);
-//       }
-//     } else {
-//       // If no collision was found in this iteration, we can stop.
-//       break;
-//     }
-//   }
-// }
+typedef void (*on_collision_callback)(void *entity_owner,
+                                      const CollisionInfo *collision_info,
+                                      float dt);
+
+static inline void
+run_collisions_on_entity(Entity *entity, Rectangle *static_colliders,
+                         int collider_count, float dt,
+                         on_collision_callback on_collision) {
+
+  // We might collide multiple times, so we iterate to resolve complex cases
+  // (like sliding into a corner).
+  for (int i = 0; i < 4; i++) {
+    // 1. Find the EARLIEST collision for this frame's movement
+    Ray2D movement_ray = {entity->pos,
+                          (Vector2){entity->vel.x * dt, entity->vel.y * dt}};
+
+    CollisionInfo nearest_collision = {
+        .t_hit = 1.0f}; // Assume no collision initially
+    int nearest_collider_index = -1;
+    bool did_collide = false;
+
+    for (int j = 0; j < collider_count; j++) {
+      CollisionInfo current_collision;
+      if (check_collision_entity_bbox(&movement_ray, &entity->bbox,
+                                      &static_colliders[j],
+                                      &current_collision)) {
+        if (current_collision.t_hit < nearest_collision.t_hit) {
+          nearest_collision = current_collision;
+          nearest_collider_index = j;
+          did_collide = true;
+        }
+      }
+    }
+
+    // 2. If a collision was found, trigger the callbacks
+    if (did_collide) {
+      // Trigger the callback to handle how entity react to collision
+      if (on_collision) {
+        on_collision(entity->owner, &nearest_collision, dt);
+      }
+    } else {
+      // If no collision was found in this iteration, we can stop.
+      break;
+    }
+  }
+}
 
 #endif // COLLISION_SYSTEM_H

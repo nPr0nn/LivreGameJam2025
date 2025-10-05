@@ -9,6 +9,8 @@
 #include "character.h"
 #include "collision_system.h"
 #include "enemy.h"
+#include "particle_system.h"
+#include "shader_manager.h"
 #include <math.h>
 
 typedef struct GameContext {
@@ -16,12 +18,19 @@ typedef struct GameContext {
   slc_MemArena *g_arena; // per game allocation
   slc_MemArena *f_arena; // per frame allocation
 
+  // Shader Manager
+  ShaderManager shader_manager;
+
   // Collisions Block
   Rectangle *collision_rects;
-  CollisionPair *collision_pairs;
-  Color *collision_colors;
-
   i32 collision_rects_count;
+
+  // Particle System
+  ParticleSystem *particle_system;
+
+  // Map
+  Font western_font;
+  Texture2D background;
 
   // Game
   RenderTexture screen;
