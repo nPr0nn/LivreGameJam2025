@@ -293,9 +293,10 @@ void menu_update(Menu *self, GameContext *g) {
         IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
       self->game->stage = RUNNING;
       StopMusicStream(self->au_lib.start_music);
-      // if (!IsAudioDeviceReady()) {
-      //     InitAudioDevice();
-      // }
+      if (!IsAudioDeviceReady()) {
+        printf("boalas as");
+        InitAudioDevice();
+      }
       PlayMusicStream(self->au_lib.background_music);
     }
     break;

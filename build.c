@@ -178,6 +178,9 @@ void build_game(String build_folder_path, String exec_name, bool build_to_web,
         string_from_cstr("-s", arena_ptr),
         string_from_cstr("ASYNCIFY", arena_ptr),
 
+        string_from_cstr("-s", arena_ptr),
+        string_from_cstr("ALLOW_MEMORY_GROWTH", arena_ptr),
+
         string_from_cstr("-DPLATFORM_WEB", arena_ptr),
         string_from_cstr("--preload-file", arena_ptr),
         string_from_cstr("images", arena_ptr),
