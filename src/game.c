@@ -147,20 +147,13 @@ void game_draw(void *ctx) {
   particle_system_draw(g->particle_system);
   enemy_draw(&g->enemy);
 
-  // for (int i = 0; i < g->collision_rects_count; i++) {
-  //   Rectangle centered_rect = {
-  //       g->collision_rects[i].x - (g->collision_rects[i].width / 2.0f),
-  //       g->collision_rects[i].y - (g->collision_rects[i].height / 2.0f),
-  //       g->collision_rects[i].width, g->collision_rects[i].height};
-  //   DrawRectangleLinesEx(centered_rect, 20, BLUE);
-  // }
-
   EndMode2D();
   DrawText("O Voaqueiro: o Inicio", 5.0, 5.0, 5.0, WHITE);
 
   EndTextureMode();
   // --- Draw final texture to screen (logic remains the same) ---
   BeginDrawing();
+  DrawFPS(10, 10);
   ClearBackground(BLACK);
 
   if (g->shader_manager.is_ripple_active) {
