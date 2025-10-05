@@ -5,6 +5,7 @@
         "raylib.h": "c",
         "game.h": "c",
         "array": "c",
-        "__tuple": "c"
+        "__tuple": "c",
+        "random": "c"
     }
 }

@@ -54,7 +54,16 @@ void game_init(void *ctx) {
   g->is_paused = false; // Initialize paused state to false
   character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
   enemy_init(&g->enemy, (Vector2){30, 0}, 30.0f); // Initialize enemy
-  menu_init(&g->menu, (Vector2){0.0,0.0}, (Vector2){target_width, target_height}, (Vector2){monitor_width, monitor_height});
+  menu_init(&g->menu, (Vector2){0.0,0.0}, (Vector2){target_width, target_height}, (Vector2){monitor_width, monitor_height}, (Vector2){scaled_width, scaled_height});
+}
+
+Vector2 pos_to_texture(Vector2 pos, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim)
+{
+  Vector2 resp;
+  float largura_borda = (window_dim.x - scaled_screen_dim.x)/2;
+  resp.x = ((pos.x-largura_borda)/(window_dim.x-(largura_borda*2))) * screen_dim.x;
+  resp.y = (pos.y/window_dim.y) * screen_dim.y;
+  return resp;
 }
 
 void game_draw(void *ctx) {

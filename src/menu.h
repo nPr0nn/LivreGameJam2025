@@ -27,6 +27,13 @@ typedef struct {
 } Button;
 
 typedef struct {
+    Rectangle rec;
+    Color color;
+    enum B_Type button_type;
+    float percentage;
+} Slider;
+
+typedef struct {
     Music background_music;
     Sound bolha;
 } Audios_library;
@@ -34,15 +41,18 @@ typedef struct {
 typedef struct {
     Vector2 pos;
     int n_buttons;
-    Button buttons[100];
+    Button buttons[10];
+    int n_sliders;
+    Slider sliders[10];
     Vector2 screen_dim;
     Vector2 window_dim;
+    Vector2 scaled_screen_dim;
     Audios_library au_lib;
 
 } Menu;
 
 
-void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim);
+void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim);
 void menu_update(Menu *self, GameContext *g);
 void menu_draw(Menu *self);
 
