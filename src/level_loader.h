@@ -8,7 +8,6 @@
 #include "../vendor/slc.h"
 
 #define TILE_SIZE 16
-#define THALF 8
 
 typedef struct t_Tile {
   const char *tile;
@@ -35,7 +34,6 @@ static inline void level_init(LevelData *level_data) {
     Image tile_image = LoadImage(level_data->tiles[i].tile);
     level_data->tiles[i].sprite = LoadTextureFromImage(tile_image);
     UnloadImage(tile_image);
-
     level_data->tiles[i].x *= TILE_SIZE;
     level_data->tiles[i].y *= TILE_SIZE;
     level_data->tiles[i].w *= TILE_SIZE;
@@ -49,37 +47,105 @@ static inline void level_init(LevelData *level_data) {
   }
 }
 
-static inline void level_draw(LevelData *level_data) {
+#define RENDER_DISTANCE 800.0f
+#define RENDER_DISTANCE_SQUARED (RENDER_DISTANCE * RENDER_DISTANCE)
+
+static inline void level_draw(LevelData *level_data, Vector2 player_pos) {
   // Draw Tiles
   for (int i = 0; i < level_data->tile_count; i++) {
-    i32 start_x = level_data->tiles[i].x;
-    i32 start_y = level_data->tiles[i].y;
+    // --- CULLING CHECK ---
+    // Calculate the center of the tile area.
+    float tile_center_x =
+        level_data->tiles[i].x + level_data->tiles[i].w / 2.0f;
+    float tile_center_y =
+        level_data->tiles[i].y + level_data->tiles[i].h / 2.0f;
 
-    i32 end_x = start_x + level_data->tiles[i].w;
-    i32 end_y = start_y + level_data->tiles[i].h;
+    // Calculate the squared distance from the player to the tile's center.
+    float dx = player_pos.x - tile_center_x;
+    float dy = player_pos.y - tile_center_y;
+    float dist_sq = (dx * dx) + (dy * dy);
+
+    if (dist_sq > RENDER_DISTANCE_SQUARED) {
+      continue;
+    }
 
     if (strcmp(level_data->tiles[i].tile, "images/voaqueiro.png") == 0) {
       continue;
     }
 
-    for (int y = start_y; y < end_y; y++) {
-      for (int x = start_x; x < end_x; x++) {
+    // --- DRAWING LOGIC (with performance fix) ---
+    i32 start_x = level_data->tiles[i].x;
+    i32 start_y = level_data->tiles[i].y;
+    i32 end_x = start_x + level_data->tiles[i].w;
+    i32 end_y = start_y + level_data->tiles[i].h;
+
+    // This is the FPS fix from last time, ensuring one draw call per tile.
+    for (int y = start_y; y < end_y; y += TILE_SIZE) {
+      for (int x = start_x; x < end_x; x += TILE_SIZE) {
         DrawTexture(level_data->tiles[i].sprite, x - TILE_SIZE / 2,
                     y - TILE_SIZE / 2, WHITE);
       }
     }
   }
 
-  // // Draw BBoxes
-  // for (int i = 0; i < level_data->collision_count; i++) {
-  //   i32 x = level_data->collisions[i].x;
-  //   i32 y = level_data->collisions[i].y;
-  //   i32 w = level_data->collisions[i].w;
-  //   i32 h = level_data->collisions[i].h;
-  //   DrawRectangleLines(x - TILE_SIZE / 2, y - TILE_SIZE / 2, w, h, RED);
-  // }
+  // Draw BBoxes
+  for (int i = 0; i < level_data->collision_count; i++) {
+    // --- CULLING CHECK ---
+    // Calculate the center of the collision box.
+    float bbox_center_x =
+        level_data->collisions[i].x + level_data->collisions[i].w / 2.0f;
+    float bbox_center_y =
+        level_data->collisions[i].y + level_data->collisions[i].h / 2.0f;
+
+    // Calculate the squared distance from the player.
+    float dx = player_pos.x - bbox_center_x;
+    float dy = player_pos.y - bbox_center_y;
+    float dist_sq = (dx * dx) + (dy * dy);
+
+    // If the box is too far away, skip it.
+    if (dist_sq > RENDER_DISTANCE_SQUARED) {
+      continue;
+    }
+
+    // --- DRAWING LOGIC ---
+    i32 x = level_data->collisions[i].x;
+    i32 y = level_data->collisions[i].y;
+    i32 w = level_data->collisions[i].w;
+    i32 h = level_data->collisions[i].h;
+    DrawRectangleLines(x - TILE_SIZE / 2, y - TILE_SIZE / 2, w, h, RED);
+  }
 }
 
+// static inline void level_draw(LevelData *level_data, Vector2 player_pos) {
+//   // Draw Tiles
+//   for (int i = 0; i < level_data->tile_count; i++) {
+//     i32 start_x = level_data->tiles[i].x;
+//     i32 start_y = level_data->tiles[i].y;
+//
+//     i32 end_x = start_x + level_data->tiles[i].w;
+//     i32 end_y = start_y + level_data->tiles[i].h;
+//
+//     if (strcmp(level_data->tiles[i].tile, "images/voaqueiro.png") == 0) {
+//       continue;
+//     }
+//
+//     for (int y = start_y; y < end_y; y++) {
+//       for (int x = start_x; x < end_x; x++) {
+//         DrawTexture(level_data->tiles[i].sprite, x, y, WHITE);
+//       }
+//     }
+//   }
+//
+//   // Draw BBoxes
+//   for (int i = 0; i < level_data->collision_count; i++) {
+//     i32 x = level_data->collisions[i].x;
+//     i32 y = level_data->collisions[i].y;
+//     i32 w = level_data->collisions[i].w;
+//     i32 h = level_data->collisions[i].h;
+//     DrawRectangleLines(x - TILE_SIZE / 2, y - TILE_SIZE / 2, w, h, RED);
+//   }
+// }
+//
 static inline Vector2 level_get_player_position(LevelData *level_data) {
   for (int i = 0; i < level_data->tile_count; i++) {
     t_Tile tile = level_data->tiles[i];
