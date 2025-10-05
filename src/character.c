@@ -33,13 +33,18 @@ void character_read_input(Character *ch, bool is_paused) {
     ch->acc.x -= move_acc;
   if (IsKeyDown(KEY_RIGHT))
     ch->acc.x += move_acc;
+  if (IsKeyDown(KEY_UP))
+    ch->acc.y -= move_acc;
+  if (IsKeyDown(KEY_DOWN))
+    ch->acc.y += move_acc;
 
   // Jump
-  if (IsKeyPressed(KEY_SPACE) && ch->pos.y == 0 && !is_paused) {
-    ch->vel.y += jump_velocity;
-  } else if (IsKeyPressed(KEY_SPACE) && is_paused && ch->pos.y == 0) {
-    ch->vel.y += jump_velocity / 4;
-  }
+  // Temporary deactiavtion of jump
+  // if (IsKeyPressed(KEY_SPACE) && !is_paused) {
+  //   ch->vel.y += jump_velocity;
+  // } else if (IsKeyPressed(KEY_SPACE) && is_paused && ch->pos.y == 0) {
+  //   ch->vel.y += jump_velocity / 4;
+  // }
 }
 
 void character_update(Character *ch, float dt, bool is_paused) {
@@ -49,10 +54,12 @@ void character_update(Character *ch, float dt, bool is_paused) {
 
   if (!is_paused) {
     // ✅ Gravity
-    ch->acc.y += gravity;
+    // temporary deactivation of gravity
+    // ch->acc.y += gravity;
 
     // ✅ Apply horizontal damping (friction)
     ch->vel.x -= ch->vel.x * friction * dt;
+    ch->vel.y -= ch->vel.y * friction * dt;
 
     // ✅ Integrate position
     ch->pos.x += ch->vel.x * dt;
@@ -61,17 +68,14 @@ void character_update(Character *ch, float dt, bool is_paused) {
     // Deadzone for jitter
     if (fabsf(ch->vel.x) < velocity_deadzone)
       ch->vel.x = 0;
+    // temporary deactivation of gravity
+    if (fabsf(ch->vel.y) < velocity_deadzone)
+      ch->vel.y = 0;
   }
 
   // ✅ Integrate velocity
   ch->vel.x += ch->acc.x * dt;
   ch->vel.y += ch->acc.y * dt;
-
-  // ✅ Ground collision
-  if (ch->pos.y > 0) {
-    ch->pos.y = 0;
-    ch->vel.y = 0;
-  }
 }
 
 void character_draw(const Character *ch) {

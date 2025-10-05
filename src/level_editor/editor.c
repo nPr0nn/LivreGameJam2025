@@ -37,10 +37,20 @@ void game_init(void *ctx) {
   const char *folder_path = "images";
   size_t count = 0;
   g->paths = slc_list_files(folder_path, &count, g->g_arena);
+  g->paths_count = (int)count;
 
-  // Load tiles
-  for (int i = 0; i < NUM_TILES; i++) {
+  // Paging setup: digits 0..9 select tiles within a page
+  g->tiles_per_page = 10;
+  g->tile_page = 0;
+
+  // Load up to NUM_TILES textures (or until we run out of paths)
+  int max_load = (g->paths_count < NUM_TILES) ? g->paths_count : NUM_TILES;
+  for (int i = 0; i < max_load; i++) {
     g->tiles[i] = LoadTexture(g->paths[i].data);
+  }
+  // For any remaining slots, set an empty texture
+  for (int i = max_load; i < NUM_TILES; i++) {
+    g->tiles[i] = (Texture2D){0};
   }
   
   // Initialize map to empty
@@ -226,7 +236,20 @@ void game_update(void *ctx) {
   // Editor
   for (int key = KEY_ZERO; key <= KEY_NINE; key++) {
     if (IsKeyPressed(key)) {
-      g->selected_tile = key - KEY_ZERO;
+      int digit = key - KEY_ZERO;
+      if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
+        // Shift+digit: change page
+        g->tile_page = digit; // page becomes the digit pressed
+        // clamp page so that first index is within available paths
+        int max_page = (g->paths_count - 1) / g->tiles_per_page;
+        if (g->tile_page > max_page) g->tile_page = max_page;
+      } else {
+        // Digit selects tile index within current page
+        int idx = g->tile_page * g->tiles_per_page + digit;
+        if (idx < NUM_TILES && idx < g->paths_count) {
+          g->selected_tile = idx;
+        }
+      }
     }
   }
 

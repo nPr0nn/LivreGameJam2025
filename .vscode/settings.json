@@ -3,6 +3,7 @@
         "game_context.h": "c",
         "raylib.h": "c",
         "cmath": "cpp",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "slc.h": "c"
     }
 }

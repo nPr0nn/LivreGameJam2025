@@ -6,7 +6,7 @@
 #define SLC_NO_LIB_PREFIX
 #include "../../vendor/slc.h"
 
-#define NUM_TILES 10
+#define NUM_TILES 128
 #define TILE_SIZE 32
 
 #define MAP_W 100
@@ -32,6 +32,9 @@ typedef struct GameContext {
   int pending_action; // 0 = none, 1 = place, -1 = erase (for rectangle mode)
   int save_flash_counter; // frames to show "saved" message
   slc_String *paths; // list of tile image paths
+  int paths_count; // number of entries in paths
+  int tile_page; // current page (0..9)
+  int tiles_per_page; // usually 10 (digits 0..9)
   // Collision layer: support types and IDs
   // collision_type: 0 = none, 1 = solid, 2 = death, 3 = trigger
   int collision_type[MAP_W][MAP_H];

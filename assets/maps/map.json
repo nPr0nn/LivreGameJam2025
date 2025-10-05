@@ -1,17 +1,10 @@
 {"map_w": 100, "map_h": 100,
 "tiles": [
-  {"tile": "images/soloseco.png", "x": 0, "y": 0, "w": 1, "h": 1},
-  {"tile": "images/Verde.png", "x": 14, "y": 2, "w": 2, "h": 1},
-  {"tile": "images/Verde.png", "x": 15, "y": 3, "w": 1, "h": 2},
-  {"tile": "images/cactu.png", "x": 10, "y": 4, "w": 2, "h": 1},
-  {"tile": "images/Grama.png", "x": 1, "y": 5, "w": 15, "h": 1},
-  {"tile": "images/solograma.png", "x": 1, "y": 6, "w": 15, "h": 5}
+  {"tile": "images/solograma.png", "x": 0, "y": 1, "w": 8, "h": 5},
+  {"tile": "images/ex_pinho.png", "x": 12, "y": 2, "w": 5, "h": 4},
+  {"tile": "images/soloseco.png", "x": 9, "y": 7, "w": 7, "h": 4}
 ],
 "collisions": [
-  {"type": "solid", "id": 0, "x": 14, "y": 2, "w": 2, "h": 1},
-  {"type": "trigger", "id": 1, "x": 14, "y": 3, "w": 1, "h": 2},
-  {"type": "solid", "id": 0, "x": 15, "y": 3, "w": 1, "h": 3},
-  {"type": "death", "id": 0, "x": 10, "y": 4, "w": 2, "h": 1},
-  {"type": "solid", "id": 0, "x": 1, "y": 5, "w": 15, "h": 1}
+
 ]
 }

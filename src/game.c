@@ -4,6 +4,7 @@
 #include "game_context.h"
 #include "utils.h"
 #include <stdio.h>
+#include "map_loader.h"
 
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
@@ -39,6 +40,9 @@ void game_init(void *ctx) {
   SetTextureFilter(g->screen.texture,
                    TEXTURE_FILTER_POINT); // pixel-perfect scaling
   SetTargetFPS(60);
+  
+  // --- Load map ---
+  load_map(g, "assets/maps/map.json");
 
   // --- Camera setup (in retro coordinate space) ---
   g->camera =
@@ -48,8 +52,20 @@ void game_init(void *ctx) {
                  .zoom = 1.0f};
   g->pos = (Vector2){0, 0};
   g->is_paused = false; // Initialize paused state to false
-  character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
+  // Initialize player at recorded spawn (from map) if available
+  Vector2 player_start = (Vector2){0, 0};
+  if (g->player_spawn_set) player_start = g->player_spawn;
+  character_init(&g->player, player_start, 8, BLUE);
   enemy_init(&g->enemy, (Vector2){30, 0}, 30.0f); // Initialize enemy
+  
+  // Debug print map
+  for (int y = 0; y < 50; y++) {
+    for (int x = 0; x < 50; x++) {
+      printf("%2d ", g->map[x][y]);
+    }
+    printf("\n");
+  }
+  
 }
 
 void game_draw(void *ctx) {
@@ -77,7 +93,25 @@ void game_draw(void *ctx) {
   BeginTextureMode(g->screen);
   ClearBackground((Color){30, 30, 50, 255});
   BeginMode2D(g->camera);
-  DrawInfiniteGrid(g->camera, 25, LIGHTGRAY);
+  DrawInfiniteGrid(g->camera, TILE_SIZE, LIGHTGRAY);
+
+  // Draw map tiles (Passar para map_loader.c depois)
+  for (int x = 0; x < MAP_W; x++) {
+    for (int y = 0; y < MAP_H; y++) {
+      int tile_idx = g->map[x][y];
+      if (tile_idx >= 0 && tile_idx < NUM_TILES) {
+        Texture2D tex = g->tiles[tile_idx];
+        // Skip drawing if tile is "voaqueiro.png"
+        if (tex.id != 0 && strcmp(g->tile_names[tile_idx], "voaqueiro.png") != 0) {
+          DrawTexturePro(tex,
+                         (Rectangle){0, 0, (float)tex.width, (float)tex.height},
+                         (Rectangle){(float)(x * TILE_SIZE), (float)(y * TILE_SIZE),
+                                     (float)TILE_SIZE, (float)TILE_SIZE},
+                         (Vector2){0, 0}, 0.0f, WHITE);
+        }
+      }
+    }
+  }
   character_draw(&g->player);
   enemy_draw(&g->enemy);
 
