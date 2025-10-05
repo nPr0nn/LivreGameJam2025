@@ -217,9 +217,9 @@ void game_update(void *ctx) {
   }
 
   // --- Collision Resolution Loop ---
-  // run_collisions_on_entity(&g->player.en, g->collision_rects,
-  //                          g->collision_rects_count, dt,
-  //                          character_on_collision);
+  run_collisions_on_entity(&g->player.en, g->level_data->collisions,
+                           g->level_data->collision_count, dt,
+                           character_on_collision);
 
   character_update(&g->player, g->particle_system, dt, g->is_paused);
   particle_system_update(g->particle_system, dt);

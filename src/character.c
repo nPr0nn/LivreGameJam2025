@@ -23,7 +23,7 @@ void character_init(Character *ch, Vector2 start_pos, float radius,
   ch->en.vel = (Vector2){0};
   ch->en.acc = (Vector2){0};
 
-  ch->ground_height = start_pos.y;
+  ch->ground_height = start_pos.y + 100.0f;
 
   Image sprite_sheet_image = LoadImage("images/voaqueiro.png");
   ch->sprite_sheet = LoadTextureFromImage(sprite_sheet_image);

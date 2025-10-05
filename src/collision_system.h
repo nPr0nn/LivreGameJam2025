@@ -3,6 +3,7 @@
 
 #include "../vendor/raylib/raylib.h"
 #include "entity.h"
+#include "level_loader.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -118,7 +119,7 @@ typedef void (*on_collision_callback)(void *entity_owner,
                                       float dt);
 
 static inline void
-run_collisions_on_entity(Entity *entity, Rectangle *static_colliders,
+run_collisions_on_entity(Entity *entity, t_Collision *static_colliders,
                          int collider_count, float dt,
                          on_collision_callback on_collision) {
 
@@ -136,13 +137,17 @@ run_collisions_on_entity(Entity *entity, Rectangle *static_colliders,
 
     for (int j = 0; j < collider_count; j++) {
       CollisionInfo current_collision;
-      if (check_collision_entity_bbox(&movement_ray, &entity->bbox,
-                                      &static_colliders[j],
+      Rectangle collider =
+          (Rectangle){(f32)static_colliders[j].x, (f32)static_colliders[j].y,
+                      (f32)static_colliders[j].w, (f32)static_colliders[j].h};
+
+      if (check_collision_entity_bbox(&movement_ray, &entity->bbox, &collider,
                                       &current_collision)) {
         if (current_collision.t_hit < nearest_collision.t_hit) {
           nearest_collision = current_collision;
           nearest_collider_index = j;
           did_collide = true;
+          printf("kajskajsajskaj\n\n");
         }
       }
     }

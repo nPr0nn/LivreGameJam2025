@@ -150,7 +150,7 @@ static inline Vector2 level_get_player_position(LevelData *level_data) {
   for (int i = 0; i < level_data->tile_count; i++) {
     t_Tile tile = level_data->tiles[i];
     if (strcmp(tile.tile, "images/voaqueiro.png") == 0) {
-      return (Vector2){(f32)tile.x - TILE_SIZE / 2.0f,
+      return (Vector2){(f32)tile.x - TILE_SIZE / 2.0f + 30,
                        (f32)tile.y - TILE_SIZE / 2.0f};
     }
   }
