@@ -18,6 +18,8 @@ enum B_Type {
   DUMMY,
 };
 
+
+
 typedef struct {
     Rectangle rec;
     char *text;

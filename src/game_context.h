@@ -11,6 +11,15 @@
 #include "enemy.h"
 #include <math.h>
 
+enum Game_stage
+{
+    START,
+    RUNNING,
+    PAUSED,
+    WIN,
+    LOSE,
+};
+
 typedef struct GameContext {
   // Memmory Management
   slc_MemArena *g_arena; // per game allocation
@@ -25,8 +34,8 @@ typedef struct GameContext {
   Menu menu;
   Enemy enemy;
   f64 dt;
-  bool is_paused;
   bool is_running;
+  enum Game_stage stage;
 } GameContext;
 
 #endif

@@ -51,7 +51,10 @@ void game_init(void *ctx) {
                  .rotation = 0.0f,
                  .zoom = 1.0f};
   g->pos = (Vector2){0, 0};
-  g->is_paused = false; // Initialize paused state to false
+
+  //o Jogo começa aqui
+  g->stage = START;
+
   character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
   enemy_init(&g->enemy, (Vector2){30, 0}, 30.0f); // Initialize enemy
   menu_init(&g->menu, (Vector2){0.0,0.0}, (Vector2){target_width, target_height}, (Vector2){monitor_width, monitor_height}, (Vector2){scaled_width, scaled_height}, g);
@@ -99,7 +102,7 @@ void game_draw(void *ctx) {
   // gamma
   DrawRectangle(0,0,(float)target_width, (float)target_height, (Color){0,0,0,255*(1-g->menu.gamma)});
 
-  if (g->is_paused)
+  if (g->stage == PAUSED)
   {
     DrawRectangle(0,0,(float)target_width, (float)target_height, (Color){0,0,0,200}); // deixa o fundo mais escuro quando pausado
     menu_draw(&g->menu);
@@ -126,21 +129,28 @@ void game_draw(void *ctx) {
 void game_update(void *ctx) {
   GameContext *g = (GameContext *)ctx;
 
-  character_read_input(&g->player, g->is_paused);
-  character_update(&g->player, GetFrameTime(), g->is_paused);
+  character_read_input(&g->player, g->stage == PAUSED);
+  character_update(&g->player, GetFrameTime(), g->stage == PAUSED);
 
   // Toggle pause state when P is pressed
   if (IsKeyPressed(KEY_P)) {
-    g->is_paused = !g->is_paused;
+    if(g->stage == PAUSED)
+    {
+      g->stage = RUNNING;
+    }
+    else
+    {
+      g->stage = PAUSED;
+    }
   }
 
   
   UpdateMusicStream(g->menu.au_lib.background_music);
   
   // Skip game updates if paused
-  if (g->is_paused) {
-    character_read_input(&g->player, g->is_paused);
-    character_update(&g->player, GetFrameTime(), g->is_paused);
+  if (g->stage == PAUSED) {
+    character_read_input(&g->player, g->stage == PAUSED);
+    character_update(&g->player, GetFrameTime(), g->stage == PAUSED);
     menu_update(&g->menu, g);
     return;
   }
@@ -148,8 +158,8 @@ void game_update(void *ctx) {
   Vector2 screen_mouse_pos = GetMousePosition();
   g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
   g->camera.target = g->player.pos;
-  character_read_input(&g->player, g->is_paused);
-  character_update(&g->player, GetFrameTime(), g->is_paused);
+  character_read_input(&g->player, g->stage == PAUSED);
+  character_update(&g->player, GetFrameTime(), g->stage == PAUSED);
   enemy_update(&g->enemy, GetFrameTime());
   character_check_collision(&g->player, &g->enemy.position, &g->enemy.radius);
 }
