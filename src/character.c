@@ -1,10 +1,10 @@
 #include "character.h"
+#include "../vendor/raylib/raylib.h"
+#include "character.h"
 #include "entity.h"
 #include "particle_system.h"
 #include "shader_manager.h"
 #include "utils.h"
-#include "character.h"
-#include "../vendor/raylib/raylib.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -25,6 +25,8 @@ void character_init(Character *ch, Vector2 start_pos, Color color) {
   ch->en.acc = (Vector2){0};
 
   ch->ground_height = start_pos.y;
+  ch->is_dead = false;
+  ch->go_next_level = false;
 
   Image sprite_sheet_image = LoadImage("images/voaqueiro.png");
   ch->sprite_sheet = LoadTextureFromImage(sprite_sheet_image);
@@ -272,6 +274,17 @@ void character_draw(const Character *ch, ShaderManager *sm) {
 void character_on_collision(void *entity_owner,
                             const CollisionInfo *collision_info, float dt) {
   Character *player = (Character *)entity_owner;
+
+  bool is_dead = strcmp(collision_info->type, "death") == 0;
+  bool go_next_level = strcmp(collision_info->type, "trigger") == 0;
+
+  if (is_dead || go_next_level) {
+    if (is_dead)
+      player->is_dead = is_dead;
+    if (go_next_level)
+      player->go_next_level = go_next_level;
+    return;
+  }
 
   if (collision_info->contact_normal.y < 0) {
     player->is_grounded = true;
