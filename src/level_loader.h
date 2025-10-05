@@ -7,6 +7,9 @@
 #define SLC_NO_LIB_PREFIX
 #include "../vendor/slc.h"
 
+#define TILE_SIZE 16
+#define THALF 8
+
 typedef struct t_Tile {
   const char *tile;
   Texture2D sprite;
@@ -32,31 +35,57 @@ static inline void level_init(LevelData *level_data) {
     Image tile_image = LoadImage(level_data->tiles[i].tile);
     level_data->tiles[i].sprite = LoadTextureFromImage(tile_image);
     UnloadImage(tile_image);
+
+    level_data->tiles[i].x *= TILE_SIZE;
+    level_data->tiles[i].y *= TILE_SIZE;
+    level_data->tiles[i].w *= TILE_SIZE;
+    level_data->tiles[i].h *= TILE_SIZE;
+  }
+  for (int i = 0; i < level_data->collision_count; i++) {
+    level_data->collisions[i].x *= TILE_SIZE;
+    level_data->collisions[i].y *= TILE_SIZE;
+    level_data->collisions[i].w *= TILE_SIZE;
+    level_data->collisions[i].h *= TILE_SIZE;
   }
 }
 
 static inline void level_draw(LevelData *level_data) {
+  // Draw Tiles
   for (int i = 0; i < level_data->tile_count; i++) {
-
     i32 start_x = level_data->tiles[i].x;
     i32 start_y = level_data->tiles[i].y;
 
     i32 end_x = start_x + level_data->tiles[i].w;
     i32 end_y = start_y + level_data->tiles[i].h;
 
+    if (strcmp(level_data->tiles[i].tile, "images/voaqueiro.png") == 0) {
+      continue;
+    }
+
     for (int y = start_y; y < end_y; y++) {
       for (int x = start_x; x < end_x; x++) {
-        DrawTexture(level_data->tiles[i].sprite, x * 16, y * 16, WHITE);
+        DrawTexture(level_data->tiles[i].sprite, x - TILE_SIZE / 2,
+                    y - TILE_SIZE / 2, WHITE);
       }
     }
   }
+
+  // // Draw BBoxes
+  // for (int i = 0; i < level_data->collision_count; i++) {
+  //   i32 x = level_data->collisions[i].x;
+  //   i32 y = level_data->collisions[i].y;
+  //   i32 w = level_data->collisions[i].w;
+  //   i32 h = level_data->collisions[i].h;
+  //   DrawRectangleLines(x - TILE_SIZE / 2, y - TILE_SIZE / 2, w, h, RED);
+  // }
 }
 
 static inline Vector2 level_get_player_position(LevelData *level_data) {
   for (int i = 0; i < level_data->tile_count; i++) {
     t_Tile tile = level_data->tiles[i];
     if (strcmp(tile.tile, "images/voaqueiro.png") == 0) {
-      return (Vector2){(f32)tile.x * 16, (f32)tile.y * 16};
+      return (Vector2){(f32)tile.x - TILE_SIZE / 2.0f,
+                       (f32)tile.y - TILE_SIZE / 2.0f};
     }
   }
 
