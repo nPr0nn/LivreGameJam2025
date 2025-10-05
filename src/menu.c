@@ -95,13 +95,15 @@ int hover_button(Button *self, Vector2 screen_dim, Vector2 window_dim, Vector2 s
 
 void menu_draw(Menu *self)
 {
-    if(self->game->stage == PAUSED)
+    switch(self->game->stage)
     {
-        Rectangle rec = (Rectangle){5, 5, self->screen_dim.x-10,self->screen_dim.y-10};
-        Color color = (Color){255,255,255,255};
-        DrawRectangleRoundedLinesEx(rec, 0.05, 0, 2, color);
-        DrawRectangleRounded(rec, 0.05, 1, (Color){100,100,100,230});
-        
+        case PAUSED:
+            DrawRectangle(0,0,self->screen_dim.x, self->screen_dim.y, (Color){0,0,0,200}); // deixa o fundo mais escuro quando pausado
+            Rectangle rec = (Rectangle){5, 5, self->screen_dim.x-10,self->screen_dim.y-10};
+            Color color = (Color){255,255,255,255};
+            DrawRectangleRoundedLinesEx(rec, 0.05, 0, 2, color);
+            DrawRectangleRounded(rec, 0.05, 1, (Color){100,100,100,230});
+            
             for(int i = 0; i<self->n_buttons;i++)
             {
                 button_draw(&self->buttons[i]);
@@ -110,24 +112,43 @@ void menu_draw(Menu *self)
             {
                 slider_draw(&self->sliders[i]);
             }
+            
+            //Exit
+            DrawText("Exit game", self->buttons[3].rec.x-57, self->buttons[3].rec.y+3, 10, RED);
+            
+            // Draw pause message if paused
+            DrawText("Game Paused", self->screen_dim.x/2-30, self->screen_dim.y-30, 10, RED);
+            DrawText("Press P to Resume", self->screen_dim.x/2-30-15, self->screen_dim.y-20, 10, LIGHTGRAY);
+            break;
+            
+            case START:
+            DrawText("Voaqueiro", 10, 10, 29, RED);
+            Vector2 posStart = (Vector2){self->screen_dim.x/2-10, self->screen_dim.y-18};
+            Vector2 tamanho = (Vector2){32,12};
+            DrawText("Start", posStart.x+2, posStart.y+2, 10, LIGHTGRAY);
+
+            Color cor_botao_start = (Color){100,100,100,200};
+            if (CheckCollisionPointRec(pos_to_texture(GetMousePosition(), self->screen_dim, self->window_dim, self->scaled_screen_dim), 
+                (Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y})) {
+                cor_botao_start = (Color){150,150,150,200};
+            }
+            DrawRectangleRounded((Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y}, 0.1, 1, cor_botao_start);
+            DrawRectangleRoundedLinesEx((Rectangle){posStart.x, posStart.y, tamanho.x,tamanho.y}, 0.1, 0, 1, (Color){255,255,255,255});
+            break;
+            
+            default:
+            break;
+        }
         
-        //Exit
-        DrawText("Exit game", self->buttons[3].rec.x-57, self->buttons[3].rec.y+3, 10, RED);
         
-        // Draw pause message if paused
-        DrawText("Game Paused", self->screen_dim.x/2-30, self->screen_dim.y-30, 10, RED);
-        DrawText("Press P to Resume", self->screen_dim.x/2-30-15, self->screen_dim.y-20, 10, LIGHTGRAY);
     }
-
-
-}
-
-void define_all_sounds_volume(Menu *menu, float volume)
-{
-    SetSoundVolume(menu->au_lib.bolha, volume);
-
-
-}
+    
+    void define_all_sounds_volume(Menu *menu, float volume)
+    {
+        SetSoundVolume(menu->au_lib.bolha, volume);
+        
+        
+    }
 
 void action_button(Button *self, Menu *menu)
 {
@@ -189,50 +210,61 @@ void action_slider(Slider *self, Menu *menu)
     default:
         break;
     }
-
-
+    
+    
 }
 
 void menu_update(Menu *self, GameContext *g)
 {
-    if(self->game->stage == PAUSED)
+    switch(self->game->stage)
     {
-        for(int i = 0; i<self->n_buttons;i++)
-        {
-            if(hover_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
+        case PAUSED:
+            for(int i = 0; i<self->n_buttons;i++)
             {
-                self->buttons[i].bright = (Color){230,230,230,255};
-            }
-            else
-            {
-                self->buttons[i].bright = (Color){255,255,255,255};
-
-            }
-            if(detect_click_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
-            {
-                PlaySound(self->au_lib.bolha);
-                self->buttons[i].pressed = !self->buttons[i].pressed;
-                printf("%d\n", self->buttons[i].button_type);
-                action_button(&self->buttons[i], self);
-            }
-        }
-        for(int i = 0; i<self->n_sliders;i++)
-        {
-            if(detect_click_slider(&self->sliders[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
-            {
-                self->moving_slider = i;
-                PlaySound(self->au_lib.bolha);
-            }
-            
-            if(self->moving_slider == i)
-            {
-                action_slider(&self->sliders[i], self);
-                if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                if(hover_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
                 {
-                    self->moving_slider = -1;
+                    self->buttons[i].bright = (Color){230,230,230,255};
+                }
+                else
+                {
+                    self->buttons[i].bright = (Color){255,255,255,255};
+
+                }
+                if(detect_click_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
+                {
+                    PlaySound(self->au_lib.bolha);
+                    self->buttons[i].pressed = !self->buttons[i].pressed;
+                    printf("%d\n", self->buttons[i].button_type);
+                    action_button(&self->buttons[i], self);
                 }
             }
-        }
+            for(int i = 0; i<self->n_sliders;i++)
+            {
+                if(detect_click_slider(&self->sliders[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
+                {
+                    self->moving_slider = i;
+                    PlaySound(self->au_lib.bolha);
+                }
+                
+                if(self->moving_slider == i)
+                {
+                    action_slider(&self->sliders[i], self);
+                    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                    {
+                        self->moving_slider = -1;
+                    }
+                }
+            }
+        break;
+
+        case START:
+            if (GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+                self->game->stage = RUNNING;
+            }
+            break;
+
+        default:
+            break;
     }
 
 }

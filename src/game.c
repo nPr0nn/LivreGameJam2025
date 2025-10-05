@@ -92,22 +92,21 @@ void game_draw(void *ctx) {
 
   // --- Render to low-res texture ---
   BeginTextureMode(g->screen);
-  ClearBackground((Color){30, 30, 50, 255});
   BeginMode2D(g->camera);
-  DrawInfiniteGrid(g->camera, 25, LIGHTGRAY);
-  character_draw(&g->player);
-  enemy_draw(&g->enemy);
+  ClearBackground((Color){30, 30, 50, 255});
+  if(g->stage == RUNNING || g->stage == PAUSED)
+  {
+    DrawInfiniteGrid(g->camera, 25, LIGHTGRAY);
+    character_draw(&g->player);
+    enemy_draw(&g->enemy);
+  }
   
   EndMode2D();
   // gamma
   DrawRectangle(0,0,(float)target_width, (float)target_height, (Color){0,0,0,255*(1-g->menu.gamma)});
 
-  if (g->stage == PAUSED)
-  {
-    DrawRectangle(0,0,(float)target_width, (float)target_height, (Color){0,0,0,200}); // deixa o fundo mais escuro quando pausado
-    menu_draw(&g->menu);
-
-  }
+  menu_draw(&g->menu);
+  
   // DrawText("Congrats! You created your first window!", 10, 10, 10, LIGHTGRAY);
   EndTextureMode();
 
@@ -148,20 +147,32 @@ void game_update(void *ctx) {
   UpdateMusicStream(g->menu.au_lib.background_music);
   
   // Skip game updates if paused
-  if (g->stage == PAUSED) {
+  switch (g->stage)
+  {
+  case PAUSED:
     character_read_input(&g->player, g->stage == PAUSED);
     character_update(&g->player, GetFrameTime(), g->stage == PAUSED);
-    menu_update(&g->menu, g);
-    return;
-  }
+    break;
+  
+  case RUNNING:
+    Vector2 screen_mouse_pos = GetMousePosition();
+    g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
+    g->camera.target = g->player.pos;
+    character_read_input(&g->player, g->stage == PAUSED);
+    character_update(&g->player, GetFrameTime(), g->stage == PAUSED);
+    enemy_update(&g->enemy, GetFrameTime());
+    character_check_collision(&g->player, &g->enemy.position, &g->enemy.radius);
 
-  Vector2 screen_mouse_pos = GetMousePosition();
-  g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
-  g->camera.target = g->player.pos;
-  character_read_input(&g->player, g->stage == PAUSED);
-  character_update(&g->player, GetFrameTime(), g->stage == PAUSED);
-  enemy_update(&g->enemy, GetFrameTime());
-  character_check_collision(&g->player, &g->enemy.position, &g->enemy.radius);
+  case START:
+    break;
+
+  default:
+    break;
+  }
+  menu_update(&g->menu, g);
+  
+  
+
 }
 
 void game_loop(void *ctx) {
