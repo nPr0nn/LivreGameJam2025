@@ -148,7 +148,6 @@ void menu_draw(Menu *self)
             case LOSE:
             DrawTextureRec(self->lose_texture, (Rectangle){0,0,self->screen_dim.x,self->screen_dim.y}, (Vector2){0.f,0.f}, (Color){255,255,255,255});
                 DrawText("Você perdeu :( ", 10, 10, 29, RED);
-                Vector2 posStart = (Vector2){self->screen_dim.x/2-10, self->screen_dim.y-18};
                 DrawText("Aperte qualquer coisa \n para recomecar", 20, 10, 10, LIGHTGRAY);
             break;
             default:
