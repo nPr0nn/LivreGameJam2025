@@ -273,6 +273,11 @@ void game_update(void *ctx) {
 
     character_update(&g->player, g->particle_system, dt, false);
     particle_system_update(g->particle_system, dt);
+    break;
+  case RESETING:
+    g->stage = RUNNING;
+    next_level(g, 1);
+    break;
 
   default:
     break;

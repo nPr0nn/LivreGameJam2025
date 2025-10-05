@@ -320,8 +320,7 @@ void menu_update(Menu *self, GameContext *g) {
     break;
   case LOSE:
     if (IsKeyPressed(KEY_C)) {
-      self->game->stage = RUNNING;
-      next_level(g, 1);
+      self->game->stage = RESETING;
     }
     break;
     

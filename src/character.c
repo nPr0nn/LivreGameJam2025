@@ -72,13 +72,13 @@ void character_init(Character *ch, Vector2 start_pos, Color color) {
 void character_read_input(Character *ch, bool is_paused) {
   ch->en.acc = (Vector2){0};
 
-  if (IsKeyPressed(KEY_LEFT)) {
+  if (IsKeyPressed(KEY_L)) {
     if (GetTime() - ch->last_left_press_time < DOUBLE_TAP_WINDOW) {
       ch->is_running = true;
     }
     ch->last_left_press_time = GetTime();
   }
-  if (IsKeyPressed(KEY_RIGHT)) {
+  if (IsKeyPressed(KEY_R)) {
     if (GetTime() - ch->last_right_press_time < DOUBLE_TAP_WINDOW) {
       ch->is_running = true;
     }
@@ -90,7 +90,7 @@ void character_read_input(Character *ch, bool is_paused) {
     move_acc *= RUN_SPEED_MULTIPLIER;
   }
 
-  if (IsKeyDown(KEY_LEFT)) {
+  if (IsKeyDown(KEY_L)) {
     // MOMENTUM: If paused, directly add to velocity. Otherwise, use
     // acceleration.
     if (is_paused) {
@@ -98,7 +98,7 @@ void character_read_input(Character *ch, bool is_paused) {
     } else {
       ch->en.acc.x -= move_acc;
     }
-  } else if (IsKeyDown(KEY_RIGHT)) {
+  } else if (IsKeyDown(KEY_R)) {
     // MOMENTUM: If paused, directly add to velocity. Otherwise, use
     // acceleration.
     if (is_paused) {
@@ -110,12 +110,12 @@ void character_read_input(Character *ch, bool is_paused) {
     ch->is_running = false;
   }
 
-  if ((IsKeyDown(KEY_LEFT) && ch->en.vel.x > 0) ||
-      (IsKeyDown(KEY_RIGHT) && ch->en.vel.x < 0)) {
+  if ((IsKeyDown(KEY_L) && ch->en.vel.x > 0) ||
+      (IsKeyDown(KEY_R) && ch->en.vel.x < 0)) {
     ch->is_running = false;
   }
 
-  if (IsKeyPressed(KEY_SPACE)) {
+  if (IsKeyPressed(KEY_J)) {
     ch->jump_buffer_timer = 0.2f; // JUMP_BUFFER_SECONDS
 
     // MOMENTUM: Charge the jump if paused, otherwise reset the modifier.
@@ -170,7 +170,7 @@ void character_pre_update(Character *ch, ParticleSystem *particle_system,
       particle_system_emit(particle_system, def, PARTICLE_MODE_FADE, 15);
     }
 
-    if (IsKeyReleased(KEY_SPACE) && ch->en.vel.y < 0) {
+    if (IsKeyReleased(KEY_J) && ch->en.vel.y < 0) {
       ch->en.vel.y *= 0.5f;
     }
 

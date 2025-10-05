@@ -16,6 +16,7 @@ enum B_Type {
   BRIGHT,
   BRIGHT_LEVEL,
   EXIT,
+  RESETING,
   DUMMY,
 };
 
