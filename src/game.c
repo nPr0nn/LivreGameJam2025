@@ -143,8 +143,10 @@ void game_update(void *ctx) {
     }
   }
 
-  
-  UpdateMusicStream(g->menu.au_lib.background_music);
+  if(g->stage == START)
+    UpdateMusicStream(g->menu.au_lib.start_music);
+  else
+    UpdateMusicStream(g->menu.au_lib.background_music);
   
   // Skip game updates if paused
   switch (g->stage)

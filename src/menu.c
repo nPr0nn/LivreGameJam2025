@@ -49,6 +49,7 @@ void au_lib_init(Menu *self)
 {
     self->au_lib = (Audios_library){0};
     self->au_lib.background_music = LoadMusicStream("sounds/musica1.mp3");
+    self->au_lib.start_music = LoadMusicStream("sounds/musica_start.mp3");
     self->au_lib.bolha = LoadSound("sounds/bolha.wav");
 
 
@@ -74,7 +75,7 @@ void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim, 
     self->scaled_screen_dim = scaled_screen_dim;
     self->gamma = 1.0f;
     au_lib_init(self);
-    PlayMusicStream(self->au_lib.background_music);
+    PlayMusicStream(self->au_lib.start_music);
 }
 
 int detect_click_button(Button *self, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim)
@@ -155,8 +156,14 @@ void action_button(Button *self, Menu *menu)
     switch (self->button_type)
     {
     case MUSIC:
-        if(self->pressed){PauseMusicStream(menu->au_lib.background_music);}
-        else{ResumeMusicStream(menu->au_lib.background_music);}
+        if(self->pressed){PauseMusicStream(menu->au_lib.background_music);PauseMusicStream(menu->au_lib.start_music);}
+        else
+        {
+            if(menu->game->stage == START)
+                ResumeMusicStream(menu->au_lib.background_music);
+            if(menu->game->stage == RUNNING)
+                ResumeMusicStream(menu->au_lib.start_music);
+        }
         
         // float volume = 1.0f;
         // if(self->pressed){volume=0.f;}
@@ -260,6 +267,8 @@ void menu_update(Menu *self, GameContext *g)
         case START:
             if (GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
                 self->game->stage = RUNNING;
+                StopMusicStream(self->au_lib.start_music);
+                PlayMusicStream(self->au_lib.background_music);
             }
             break;
 

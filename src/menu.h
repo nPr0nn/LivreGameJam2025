@@ -40,6 +40,7 @@ typedef struct {
 
 typedef struct {
     Music background_music;
+    Music start_music;
     Sound bolha;
 } Audios_library;
 
