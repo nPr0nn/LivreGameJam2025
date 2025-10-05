@@ -14,7 +14,7 @@ Button button_init(int x, int y, int width, int height, char * text, int r, int 
     UnloadImage(sprite_sheet_image);
     
     //passa tudo pro botao
-    Button but = (Button){rec, text, color, text_size, type, sprite_sheet, false};
+    Button but = (Button){rec, text, color, text_size, type, sprite_sheet, false, (Color){255,255,255,255}};
     return but;
 }
 
@@ -30,7 +30,7 @@ void button_draw(Button *self)
 DrawRectangleRoundedLinesEx(self->rec, 0.1, 0, 1, (Color){255,255,255,255});
 DrawRectangleRounded(self->rec, 0.1, 1, self->color);
 DrawText(self->text, self->rec.x + self->rec.width/2 - MeasureText(self->text, self->text_size)/2, self->rec.y + self->rec.height/2-self->text_size/2, self->text_size, LIGHTGRAY);
-Color color = WHITE;
+Color color = self->bright;
 if(self->pressed)
 color = GRAY;
 DrawTextureRec(self->sprite_sheet, (Rectangle){0,0,16,16}, (Vector2){self->rec.x, self->rec.y}, color);
@@ -55,18 +55,24 @@ void au_lib_init(Menu *self)
 
 }
 
-void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim)
+void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim, GameContext *game)
 {
-    self->buttons[0] = button_init(screen_dim.x/2-20,10,16,16, "", 255,255,255,255, 10, MUSIC, "images/sound.png");
-    self->buttons[1] = button_init(screen_dim.x/2-20,30,16,16, "", 255,255,255,255, 10, SOUND_EFFECTS, "images/musicnote.png");
-    self->n_buttons = 2;
+    self->game = game;
+    self->moving_slider = -1;
+    self->buttons[0] = button_init(screen_dim.x-35,10,16,16, "", 255,255,255,255, 10, MUSIC, "images/musicnote.png");
+    self->buttons[1] = button_init(screen_dim.x-35,30,16,16, "", 255,255,255,255, 10, SOUND_EFFECTS, "images/sound.png");
+    self->buttons[2] = button_init(screen_dim.x-35,50,16,16, "", 255,255,255,255, 10, BRIGHT, "images/lampada.png");
+    self->buttons[3] = button_init(screen_dim.x-35,70,16,16, "", 255,255,255,255, 10, EXIT, "images/x.png");
+    self->n_buttons = 4;
     
-    self->sliders[0] = slider_init(screen_dim.x/2-56,16,32,16, 255,255,255,255, SOUND_EFFECTS, 0.5f);
-    self->sliders[1] = slider_init(screen_dim.x/2-56,36,32,16, 255,255,255,255, SOUND_EFFECTS, 0.5f);
-    self->n_sliders = 2;
+    self->sliders[0] = slider_init(15,16,100,16, 255,255,255,255, VOLUME_MUSIC, 0.5f);
+    self->sliders[1] = slider_init(15,36,100,16, 255,255,255,255, VOLUME_SOUND_EFFECTS, 0.5f);
+    self->sliders[2] = slider_init(15,56,100,16, 255,255,255,255, BRIGHT_LEVEL, 0.5f);
+    self->n_sliders = 3;
     self->screen_dim = screen_dim;
     self->window_dim = window_dim;
     self->scaled_screen_dim = scaled_screen_dim;
+    self->gamma = 1.0f;
     au_lib_init(self);
     PlayMusicStream(self->au_lib.background_music);
 }
@@ -79,6 +85,10 @@ int detect_click_slider(Slider *self, Vector2 screen_dim, Vector2 window_dim, Ve
 {
     bool result = (CheckCollisionPointRec(pos_to_texture(GetMousePosition(), screen_dim, window_dim, scaled_screen_dim), self->rec) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
     return result;
+}
+int hover_button(Button *self, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim)
+{
+    return (CheckCollisionPointRec(pos_to_texture(GetMousePosition(), screen_dim, window_dim, scaled_screen_dim), self->rec));
 }
 
 
@@ -99,6 +109,9 @@ DrawRectangleRounded(rec, 0.05, 1, (Color){100,100,100,230});
         slider_draw(&self->sliders[i]);
     }
 
+//Exit
+DrawText("Exit game", self->buttons[3].rec.x-57, self->buttons[3].rec.y+3, 10, RED);
+
 // Draw pause message if paused
 DrawText("Game Paused", self->screen_dim.x/2-30, self->screen_dim.y-30, 10, RED);
 DrawText("Press P to Resume", self->screen_dim.x/2-30-15, self->screen_dim.y-20, 10, LIGHTGRAY);
@@ -109,6 +122,7 @@ DrawText("Press P to Resume", self->screen_dim.x/2-30-15, self->screen_dim.y-20,
 void define_all_sounds_volume(Menu *menu, float volume)
 {
     SetSoundVolume(menu->au_lib.bolha, volume);
+
 
 }
 
@@ -129,6 +143,15 @@ void action_button(Button *self, Menu *menu)
         else{define_all_sounds_volume(menu, 1.0f);}
         
         break;
+    case BRIGHT:
+        if(self->pressed){menu->gamma = 0.5f;}
+        else{menu->gamma = menu->sliders[2].percentage;}
+        
+        break;
+    case EXIT:
+        menu->game->is_running = false;
+        
+        break;
     default:
         break;
     }
@@ -137,7 +160,6 @@ void action_button(Button *self, Menu *menu)
 }
 void action_slider(Slider *self, Menu *menu)
 {
-
     Vector2 mousePoint = pos_to_texture(GetMousePosition(), menu->screen_dim, menu->window_dim, menu->scaled_screen_dim);
     self->percentage = (mousePoint.x - self->rec.x) / self->rec.width;
     if(self->percentage < 0) self->percentage = 0;
@@ -145,15 +167,21 @@ void action_slider(Slider *self, Menu *menu)
 
     switch (self->button_type)
     {
-    case MUSIC:
+    case VOLUME_MUSIC:
         
-        // float volume = 1.0f;
-        // if(self->pressed){volume=0.f;}
-        // SetMusicVolume(menu->background_music, volume);
+        SetMusicVolume(menu->au_lib.background_music, self->percentage);
         break;
-    case SOUND_EFFECTS:
+    case VOLUME_SOUND_EFFECTS:
+        if(!menu->buttons[1].pressed){
+            define_all_sounds_volume(menu, self->percentage);
+
+        }
         
-        
+        break;
+    case BRIGHT_LEVEL:
+        if(!menu->buttons[2].pressed){
+            menu->gamma = self->percentage;
+        }
         break;
     default:
         break;
@@ -166,6 +194,15 @@ void menu_update(Menu *self, GameContext *g)
 {
     for(int i = 0; i<self->n_buttons;i++)
     {
+        if(hover_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
+        {
+            self->buttons[i].bright = (Color){230,230,230,255};
+        }
+        else
+        {
+            self->buttons[i].bright = (Color){255,255,255,255};
+
+        }
         if(detect_click_button(&self->buttons[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
         {
             PlaySound(self->au_lib.bolha);
@@ -178,10 +215,17 @@ void menu_update(Menu *self, GameContext *g)
     {
         if(detect_click_slider(&self->sliders[i], self->screen_dim, self->window_dim, self->scaled_screen_dim))
         {
-            
-
-            printf("%d\n", self->buttons[i].button_type);
+            self->moving_slider = i;
+            PlaySound(self->au_lib.bolha);
+        }
+        
+        if(self->moving_slider == i)
+        {
             action_slider(&self->sliders[i], self);
+            if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+            {
+                self->moving_slider = -1;
+            }
         }
     }
 

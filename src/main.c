@@ -11,7 +11,7 @@ void set_application_loop(void *ctx, void_func_ptr game_loop) {
 }
 #else
 void set_application_loop(void *ctx, void_func_ptr game_loop) {
-  while (!WindowShouldClose()) {
+  while (!WindowShouldClose() && ((GameContext *)ctx)->is_running) {
     game_loop(ctx);
   }
 }

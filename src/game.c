@@ -9,7 +9,7 @@
 
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
-
+  g->is_running = true;
   // const char *folder_path = "images";
   // size_t count = 0;
   // slc_String *paths = slc_list_files(folder_path, &count, g->g_arena);
@@ -54,7 +54,7 @@ void game_init(void *ctx) {
   g->is_paused = false; // Initialize paused state to false
   character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
   enemy_init(&g->enemy, (Vector2){30, 0}, 30.0f); // Initialize enemy
-  menu_init(&g->menu, (Vector2){0.0,0.0}, (Vector2){target_width, target_height}, (Vector2){monitor_width, monitor_height}, (Vector2){scaled_width, scaled_height});
+  menu_init(&g->menu, (Vector2){0.0,0.0}, (Vector2){target_width, target_height}, (Vector2){monitor_width, monitor_height}, (Vector2){scaled_width, scaled_height}, g);
 }
 
 Vector2 pos_to_texture(Vector2 pos, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim)
@@ -94,23 +94,31 @@ void game_draw(void *ctx) {
   DrawInfiniteGrid(g->camera, 25, LIGHTGRAY);
   character_draw(&g->player);
   enemy_draw(&g->enemy);
-
+  
   EndMode2D();
+  // gamma
+  DrawRectangle(0,0,(float)target_width, (float)target_height, (Color){0,0,0,255*(1-g->menu.gamma)});
+
   if (g->is_paused)
+  {
+    DrawRectangle(0,0,(float)target_width, (float)target_height, (Color){0,0,0,200}); // deixa o fundo mais escuro quando pausado
     menu_draw(&g->menu);
+
+  }
   // DrawText("Congrats! You created your first window!", 10, 10, 10, LIGHTGRAY);
   EndTextureMode();
 
   // --- Draw to screen with vertical bars ---
   BeginDrawing();
   ClearBackground(BLACK); // fills the bars
-
+  
+  
   DrawTexturePro(g->screen.texture,
-                 (Rectangle){0, 0, (float)target_width, -(float)target_height},
-                 (Rectangle){offset_x, offset_y, (float)scaled_width,
-                             (float)scaled_height},
-                 (Vector2){0, 0}, 0.0f, WHITE);
-
+    (Rectangle){0, 0, (float)target_width, -(float)target_height},
+    (Rectangle){offset_x, offset_y, (float)scaled_width,
+      (float)scaled_height},
+      (Vector2){0, 0}, 0.0f, WHITE);
+      
 
   EndDrawing();
 }

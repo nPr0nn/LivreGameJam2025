@@ -13,6 +13,8 @@ enum B_Type {
   SOUND_EFFECTS,
   VOLUME_SOUND_EFFECTS,
   BRIGHT,
+  BRIGHT_LEVEL,
+  EXIT,
   DUMMY,
 };
 
@@ -24,6 +26,7 @@ typedef struct {
     enum B_Type button_type;
     Texture sprite_sheet;
     bool pressed;
+    Color bright;
 } Button;
 
 typedef struct {
@@ -48,11 +51,14 @@ typedef struct {
     Vector2 window_dim;
     Vector2 scaled_screen_dim;
     Audios_library au_lib;
+    float gamma;
+    int moving_slider;
+    GameContext *game;
 
 } Menu;
 
 
-void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim);
+void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim, GameContext *game);
 void menu_update(Menu *self, GameContext *g);
 void menu_draw(Menu *self);
 
