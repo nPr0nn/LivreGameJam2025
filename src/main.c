@@ -1,6 +1,5 @@
 
 #include "game.h"
-#define SLC_IMPL
 #include "game_context.h"
 
 typedef void (*void_func_ptr)(void *);
