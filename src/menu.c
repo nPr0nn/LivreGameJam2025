@@ -93,6 +93,9 @@ void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim,
   Image start_image = LoadImage("images/telainicio.png");
   self->start_texture = LoadTextureFromImage(start_image);
   UnloadImage(start_image);
+  Image lose_image = LoadImage("images/telainicio.png");
+  self->lose_texture = LoadTextureFromImage(lose_image);
+  UnloadImage(lose_image);
 }
 
 int detect_click_button(Button *self, Vector2 screen_dim, Vector2 window_dim,
@@ -223,6 +226,7 @@ void action_button(Button *self, Menu *menu) {
     break;
   }
 }
+
 void action_slider(Slider *self, Menu *menu) {
   Vector2 mousePoint =
       pos_to_texture(GetMousePosition(), menu->screen_dim, menu->window_dim,
@@ -294,9 +298,20 @@ void menu_update(Menu *self, GameContext *g) {
       self->game->stage = RUNNING;
       StopMusicStream(self->au_lib.start_music);
       if (!IsAudioDeviceReady()) {
-        printf("boalas as");
         InitAudioDevice();
       }
+      PlayMusicStream(self->au_lib.background_music);
+    }
+    break;
+  case LOSE:
+    if (GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ||
+        IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+      self->game->stage = RUNNING;
+      StopMusicStream(self->au_lib.start_music);
+#ifdef PLATFORM_WEB
+      InitAudioDevice();
+#endif
+
       PlayMusicStream(self->au_lib.background_music);
     }
     break;

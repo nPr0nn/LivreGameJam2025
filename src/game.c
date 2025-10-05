@@ -64,9 +64,9 @@ void game_init(void *ctx) {
     monitor_height = scaled_height;
 
   InitWindow(monitor_width, monitor_height, "Livre GameJam");
-
+#ifndef PLATFORM_WEB
   InitAudioDevice();
-
+#endif
   // --- Create the low-res render texture ---
   g->screen = LoadRenderTexture(target_width, target_height);
   SetTextureFilter(g->screen.texture,
