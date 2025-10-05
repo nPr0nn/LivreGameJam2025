@@ -25,6 +25,7 @@ void next_level(GameContext *g, int level) {
 
   // --- Load background ---
   Image background_image = LoadImage(background_path);
+  g->bcolor = GetImageColor(background_image, 0, 0);
   g->background = LoadTextureFromImage(background_image);
   UnloadImage(background_image);
 
@@ -130,7 +131,7 @@ void game_draw(void *ctx) {
 
   // --- Render to low-res texture ---
   BeginTextureMode(g->screen);
-  ClearBackground((Color){237, 165, 63, 255});
+  ClearBackground(g->bcolor);
   BeginMode2D(g->camera);
   if (g->stage == RUNNING || g->stage == PAUSED) {
     // scrolling.

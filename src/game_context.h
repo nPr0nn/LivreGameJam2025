@@ -35,6 +35,7 @@ typedef struct GameContext {
 
   // Particle System
   ParticleSystem *particle_system;
+  Color bcolor;
 
   // Map
   Vector2 anchor;
