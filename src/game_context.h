@@ -7,6 +7,7 @@
 #include "../vendor/slc.h"
 
 #include "character.h"
+#include "collision_system.h"
 #include "enemy.h"
 #include <math.h>
 
@@ -14,6 +15,13 @@ typedef struct GameContext {
   // Memmory Management
   slc_MemArena *g_arena; // per game allocation
   slc_MemArena *f_arena; // per frame allocation
+
+  // Collisions Block
+  Rectangle *collision_rects;
+  CollisionPair *collision_pairs;
+  Color *collision_colors;
+
+  i32 collision_rects_count;
 
   // Game
   RenderTexture screen;

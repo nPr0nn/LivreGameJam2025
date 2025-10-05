@@ -1,19 +1,15 @@
-#include "game.h"
+#include <iso646.h>
+#define SLC_IMPL
+
 #include "character.h"
+#include "collision_system.h"
 #include "enemy.h"
+#include "game.h"
 #include "game_context.h"
 #include "utils.h"
-#include <stdio.h>
 
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
-
-  // const char *folder_path = "images";
-  // size_t count = 0;
-  // slc_String *paths = slc_list_files(folder_path, &count, g->g_arena);
-  // for (i32 i = 0; i < count; i++) {
-  //   printf("path: %s \n", paths[i].data);
-  // }
 
   // --- Retro target resolution ---
   const i32 target_width = 160;
@@ -48,8 +44,23 @@ void game_init(void *ctx) {
                  .zoom = 1.0f};
   g->pos = (Vector2){0, 0};
   g->is_paused = false; // Initialize paused state to false
+
+  // --- Entities Init ---
   character_init(&g->player, (Vector2){0, 0}, 8, BLUE);
-  enemy_init(&g->enemy, (Vector2){30, 0}, 30.0f); // Initialize enemy
+  enemy_init(&g->enemy, (Vector2){30, 0}, 30.0f);
+
+  i32 num_object = 100;
+  g->collision_rects =
+      mem_arena_alloc(g->g_arena, num_object * sizeof(Rectangle));
+  g->collision_rects[0] = (Rectangle){20, 0, 16, 16};
+  g->collision_rects[1] = (Rectangle){40, 0, 16, 16};
+  g->collision_rects[2] = (Rectangle){60, 0, 20, 20};
+  g->collision_rects[3] = (Rectangle){-20, 0, 20, 20};
+  g->collision_rects[4] = (Rectangle){80, 0, 20, 20};
+  g->collision_rects[5] = (Rectangle){140, -30, 20, 20};
+  g->collision_rects[6] = (Rectangle){160, -40, 20, 20};
+
+  g->collision_rects_count = 7;
 }
 
 void game_draw(void *ctx) {
@@ -81,6 +92,15 @@ void game_draw(void *ctx) {
   character_draw(&g->player);
   enemy_draw(&g->enemy);
 
+  // Draw Collisions Rects
+  for (int i = 0; i < g->collision_rects_count; i++) {
+    Rectangle centered_rect = {
+        g->collision_rects[i].x - ((g->collision_rects[i].width) / 2.0f),
+        g->collision_rects[i].y - ((g->collision_rects[i].height) / 2.0f),
+        g->collision_rects[i].width, g->collision_rects[i].height};
+    DrawRectangleLinesEx(centered_rect, 20, BLUE);
+  }
+
   EndMode2D();
   DrawText("Congrats! You created your first window!", 10, 10, 10, LIGHTGRAY);
   EndTextureMode();
@@ -106,28 +126,76 @@ void game_draw(void *ctx) {
 void game_update(void *ctx) {
   GameContext *g = (GameContext *)ctx;
 
-  character_read_input(&g->player, g->is_paused);
-  character_update(&g->player, GetFrameTime(), g->is_paused);
+  float dt = GetFrameTime();
 
   // Toggle pause state when P is pressed
   if (IsKeyPressed(KEY_P)) {
     g->is_paused = !g->is_paused;
   }
 
-  // Skip game updates if paused
-  if (g->is_paused) {
-    character_read_input(&g->player, g->is_paused);
-    character_update(&g->player, GetFrameTime(), g->is_paused);
-    return;
-  }
-
   Vector2 screen_mouse_pos = GetMousePosition();
   g->world_mouse_pos = GetScreenToWorld2D(screen_mouse_pos, g->camera);
   g->camera.target = g->player.pos;
   character_read_input(&g->player, g->is_paused);
+  character_pre_update(&g->player, dt, g->is_paused);
+
+  // Skip game updates if paused
+  if (g->is_paused) {
+    return;
+  }
+
+  // --- Collision Resolution Loop ---
+
+  // We might collide multiple times, so we may need to iterate.
+  // For a simple game, once is often enough, but a loop is more robust.
+  for (int i = 0; i < 4; i++) {
+    // 1. Find the EARLIEST collision for this frame's movement
+    Vector2 origin_vel = (Vector2){g->player.vel.x * dt, g->player.vel.y * dt};
+    Ray2D movement_ray = {g->player.pos, origin_vel};
+
+    // Assume no collision
+    CollisionInfo nearest_collision = {.t_hit = 1.0f};
+    bool did_collide = false;
+
+    for (int j = 0; j < g->collision_rects_count; j++) {
+      CollisionInfo current_collision;
+      if (check_collision_entity_bbox(&movement_ray, &g->player.bbox,
+                                      &g->collision_rects[j],
+                                      &current_collision)) {
+        if (current_collision.t_hit < nearest_collision.t_hit) {
+          nearest_collision = current_collision;
+          did_collide = true;
+        }
+      }
+    }
+
+    // 2. If a collision was found, resolve it
+    if (did_collide) {
+      if (nearest_collision.contact_normal.y < 0) {
+        g->player.is_grounded = true;
+      }
+      // STEP A: CORRECT POSITION
+      // Move the player to the exact point of contact. This prevents overlap.
+      // We add a tiny amount in the direction of velocity to avoid getting
+      // stuck.
+      g->player.pos.x +=
+          g->player.vel.x * dt * (nearest_collision.t_hit - 0.001f);
+      g->player.pos.y +=
+          g->player.vel.y * dt * (nearest_collision.t_hit - 0.001f);
+
+      // STEP B: CORRECT VELOCITY (for sliding)
+      float dot_product =
+          (g->player.vel.x * nearest_collision.contact_normal.x +
+           g->player.vel.y * nearest_collision.contact_normal.y);
+
+      g->player.vel.x -= dot_product * nearest_collision.contact_normal.x;
+      g->player.vel.y -= dot_product * nearest_collision.contact_normal.y;
+    }
+  }
+
   character_update(&g->player, GetFrameTime(), g->is_paused);
+
   enemy_update(&g->enemy, GetFrameTime());
-  character_check_collision(&g->player, &g->enemy.position, &g->enemy.radius);
 }
 
 void game_loop(void *ctx) {
