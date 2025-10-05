@@ -58,6 +58,7 @@ typedef struct {
     int moving_slider;
     GameContext *game;
     Texture start_texture;
+    Texture lose_texture;
 
 } Menu;
 
