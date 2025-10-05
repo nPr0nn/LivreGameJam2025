@@ -1,11 +1,12 @@
 #ifndef MENU_H
 #define MENU_H
 
+#include "../vendor/raylib/raylib.h"
 
 #define SLC_NO_LIB_PREFIX
 #include "../vendor/slc.h"
 
-typedef struct GameContext GameContext; 
+typedef struct GameContext GameContext;
 
 enum B_Type {
   MUSIC,
@@ -18,30 +19,28 @@ enum B_Type {
   DUMMY,
 };
 
-
-
 typedef struct {
-    Rectangle rec;
-    char *text;
-    Color color;
-    int text_size;
-    enum B_Type button_type;
-    Texture sprite_sheet;
-    bool pressed;
-    Color bright;
+  Rectangle rec;
+  char *text;
+  Color color;
+  int text_size;
+  enum B_Type button_type;
+  Texture sprite_sheet;
+  bool pressed;
+  Color bright;
 } Button;
 
 typedef struct {
-    Rectangle rec;
-    Color color;
-    enum B_Type button_type;
-    float percentage;
+  Rectangle rec;
+  Color color;
+  enum B_Type button_type;
+  float percentage;
 } Slider;
 
 typedef struct {
-    Music background_music;
-    Music start_music;
-    Sound bolha;
+  Music background_music;
+  Music start_music;
+  Sound bolha;
 } Audios_library;
 
 typedef struct {
@@ -62,8 +61,8 @@ typedef struct {
 
 } Menu;
 
-
-void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim, GameContext *game);
+void menu_init(Menu *self, Vector2 pos, Vector2 screen_dim, Vector2 window_dim,
+               Vector2 scaled_screen_dim, GameContext *game);
 void menu_update(Menu *self, GameContext *g);
 void menu_draw(Menu *self);
 

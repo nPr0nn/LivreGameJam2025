@@ -35,6 +35,8 @@ typedef struct Character {
   float frame_height;
   float frame_width;
   bool is_look_right;
+  bool is_dead;
+  bool go_next_level;
 
   // Physics
   float gravity;

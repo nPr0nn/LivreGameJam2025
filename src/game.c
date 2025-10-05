@@ -7,9 +7,8 @@
 #include "game.h"
 #include "game_context.h"
 #include "level_loader.h"
-#include "utils.h"
-#include "character.h"
 #include "menu.h"
+#include "utils.h"
 #include <stdio.h>
 
 Vector2 get_world_pos_in_texture(GameContext *g, Vector2 world_pos) {
@@ -18,9 +17,35 @@ Vector2 get_world_pos_in_texture(GameContext *g, Vector2 world_pos) {
   return screen_pos;
 }
 
+void next_level(GameContext *g, int level) {
+
+  char background_path[128];
+  snprintf(background_path, sizeof(background_path), "images/background%d.png",
+           level);
+
+  // --- Load background ---
+  Image background_image = LoadImage(background_path);
+  g->bcolor = GetImageColor(background_image, 0, 0);
+  g->background = LoadTextureFromImage(background_image);
+  UnloadImage(background_image);
+
+  // --- Build map file path ---
+  char path[128];
+  snprintf(path, sizeof(path), "images/levels/%d.json", level);
+
+  // --- Load and initialize level ---
+  g->level_data = load_level_data(path, g->g_arena);
+  level_init(g->level_data);
+
+  // --- Initialize player ---
+  g->anchor = level_get_player_position(g->level_data);
+  character_init(&g->player, g->anchor, BLUE);
+}
+
 void game_init(void *ctx) {
   GameContext *g = (GameContext *)ctx;
   g->is_running = true;
+  g->progression = 1;
 
   // --- Retro target resolution ---
   const i32 target_width = 160;
@@ -57,35 +82,31 @@ void game_init(void *ctx) {
                  .zoom = 1.0f};
   g->pos = (Vector2){0, 0};
 
-  //o Jogo começa aqui
+  // o Jogo começa aqui
   g->stage = START;
 
   // --- Shader Manager ---
   shader_manager_init(&g->shader_manager);
-  
+
   // --- Particle System ---
   g->particle_system = particle_system_create(g->g_arena, 1000);
-  
-  // --- Map Init ---
-  // g->western_font = LoadFont("images/PublicPixel.ttf");
-  Image background_image = LoadImage("images/background.png");
-  g->background = LoadTextureFromImage(background_image);
-  UnloadImage(background_image);
-  g->level_data = load_level_data("images/levels/2_caverna.json", g->g_arena);
-  level_init(g->level_data);
-  
+
+  next_level(g, 2);
+
   // --- Entities Init ---
-  g->anchor = level_get_player_position(g->level_data);
-  character_init(&g->player, g->anchor, BLUE);
-  menu_init(&g->menu, (Vector2){0.0,0.0}, (Vector2){target_width, target_height}, (Vector2){monitor_width, monitor_height}, (Vector2){scaled_width, scaled_height}, g);
+  menu_init(&g->menu, (Vector2){0.0, 0.0},
+            (Vector2){target_width, target_height},
+            (Vector2){monitor_width, monitor_height},
+            (Vector2){scaled_width, scaled_height}, g);
 }
 
-Vector2 pos_to_texture(Vector2 pos, Vector2 screen_dim, Vector2 window_dim, Vector2 scaled_screen_dim)
-{
+Vector2 pos_to_texture(Vector2 pos, Vector2 screen_dim, Vector2 window_dim,
+                       Vector2 scaled_screen_dim) {
   Vector2 resp;
-  float largura_borda = (window_dim.x - scaled_screen_dim.x)/2;
-  resp.x = ((pos.x-largura_borda)/(window_dim.x-(largura_borda*2))) * screen_dim.x;
-  resp.y = (pos.y/window_dim.y) * screen_dim.y;
+  float largura_borda = (window_dim.x - scaled_screen_dim.x) / 2;
+  resp.x = ((pos.x - largura_borda) / (window_dim.x - (largura_borda * 2))) *
+           screen_dim.x;
+  resp.y = (pos.y / window_dim.y) * screen_dim.y;
   return resp;
 }
 
@@ -110,24 +131,23 @@ void game_draw(void *ctx) {
 
   // --- Render to low-res texture ---
   BeginTextureMode(g->screen);
-  ClearBackground((Color){237, 165, 63, 255});
+  ClearBackground(g->bcolor);
   BeginMode2D(g->camera);
-  if(g->stage == RUNNING || g->stage == PAUSED)
-  {
+  if (g->stage == RUNNING || g->stage == PAUSED) {
     // scrolling.
     float bg_scale = 0.4f;
     float parallax_factor =
         0.5f; // How much slower the background scrolls (0.5 = 50% speed)
-    
+
     // The source rectangle scrolls its X position.
     // fmodf makes the value wrap around when it exceeds the texture's width,
     // creating the infinite looping effect.
     Rectangle source_rec = {
         fmodf(g->camera.target.x * parallax_factor, g->background.width), 0.0f,
         (float)g->background.width, (float)g->background.height};
-    
-    // The destination rectangle should cover the entire visible screen area where
-    // the background is meant to be seen. We draw it a bit wider than the
+
+    // The destination rectangle should cover the entire visible screen area
+    // where the background is meant to be seen. We draw it a bit wider than the
     // target width to prevent any visible seams at the edges during movement.
     Rectangle dest_rec = {
         g->camera.target.x -
@@ -135,27 +155,28 @@ void game_draw(void *ctx) {
         g->anchor.y - 250,         // Your original Y position
         (float)target_width,       // Match the camera's width
         (float)g->background.height * bg_scale};
-    
+
     DrawTextureTiled(g->background, source_rec, dest_rec, (Vector2){0, 0}, 0.0f,
                      bg_scale, WHITE);
-    
+
     // --- End of new background drawing logic ---
-    
+
     // Draw THE WORLD
     level_draw(g->level_data, g->player.en.pos);
     character_draw(&g->player, &g->shader_manager);
     particle_system_draw(g->particle_system);
   }
-  
+
   EndMode2D();
   // gamma
-  DrawRectangle(0,0,(float)target_width, (float)target_height, (Color){0,0,0,255*(1-g->menu.gamma)});
+  DrawRectangle(0, 0, (float)target_width, (float)target_height,
+                (Color){0, 0, 0, 255 * (1 - g->menu.gamma)});
 
   menu_draw(&g->menu);
-  
-  // DrawText("Congrats! You created your first window!", 10, 10, 10, LIGHTGRAY);
-  EndTextureMode();
 
+  // DrawText("Congrats! You created your first window!", 10, 10, 10,
+  // LIGHTGRAY);
+  EndTextureMode();
 
   EndTextureMode();
   // --- Draw final texture to screen (logic remains the same) ---
@@ -172,11 +193,10 @@ void game_draw(void *ctx) {
   }
 
   DrawTexturePro(g->screen.texture,
-    (Rectangle){0, 0, (float)target_width, -(float)target_height},
-    (Rectangle){offset_x, offset_y, (float)scaled_width,
-      (float)scaled_height},
-      (Vector2){0, 0}, 0.0f, WHITE);
-      
+                 (Rectangle){0, 0, (float)target_width, -(float)target_height},
+                 (Rectangle){offset_x, offset_y, (float)scaled_width,
+                             (float)scaled_height},
+                 (Vector2){0, 0}, 0.0f, WHITE);
 
   // Check if a shader was active before trying to end the mode
   if (g->shader_manager.is_ripple_active || !g->stage == PAUSED) {
@@ -192,61 +212,65 @@ void game_update(void *ctx) {
   float dt = GetFrameTime();
   Vector2 player_texture_pos = get_world_pos_in_texture(g, g->player.en.pos);
   g->shader_manager.spotlight_center.x =
-  player_texture_pos.x / g->screen.texture.width;
+      player_texture_pos.x / g->screen.texture.width;
   g->shader_manager.spotlight_center.y =
-  player_texture_pos.y / g->screen.texture.height;
+      player_texture_pos.y / g->screen.texture.height;
   shader_manager_update(&g->shader_manager);
 
   // Toggle pause state when P is pressed
   if (IsKeyPressed(KEY_P)) {
-    if(g->stage == PAUSED)
-    {
+    if (g->stage == PAUSED) {
       g->stage = RUNNING;
-    }
-    else
-    {
+    } else {
       g->stage = PAUSED;
     }
   }
 
-  if(g->stage == START)
+  if (g->stage == START)
     UpdateMusicStream(g->menu.au_lib.start_music);
-    else
+  else
     UpdateMusicStream(g->menu.au_lib.background_music);
-    
-    // Skip game updates if paused
-    switch (g->stage)
-    {
-      case PAUSED:
-      g->camera.target = g->player.en.pos;
-      character_read_input(&g->player, g->stage == PAUSED);
-      character_update(&g->player, g->particle_system, dt, true);
-  break;
-  
+
+  // Skip game updates if paused
+  switch (g->stage) {
+  case PAUSED:
+    g->camera.target = g->player.en.pos;
+    character_read_input(&g->player, g->stage == PAUSED);
+    character_update(&g->player, g->particle_system, dt, true);
+    break;
+
   case RUNNING:
-  
+
     // Toggle pause state when P is pressed
     if (IsKeyPressed(KEY_P)) {
       // First, flip the pause state
-      
+
       const float HORIZONTAL_MOMENTUM_THRESHOLD = 150.0f;
-      
+
       // Check if the player has enough momentum to trigger the ripple
       if (fabs(g->player.en.vel.x) >= HORIZONTAL_MOMENTUM_THRESHOLD ||
-      g->player.jump_velocity_modifier >= 1.5) {
+          g->player.jump_velocity_modifier >= 1.5) {
         trigger_ripple(&g->shader_manager, g->shader_manager.spotlight_center);
       }
-      
     }
     g->camera.target = g->player.en.pos;
     character_read_input(&g->player, g->stage == PAUSED);
-    character_pre_update(&g->player, g->particle_system, dt, g->stage == PAUSED);
-    
+    character_pre_update(&g->player, g->particle_system, dt,
+                         g->stage == PAUSED);
 
     // --- Collision Resolution Loop ---
     run_collisions_on_entity(&g->player.en, g->level_data->collisions,
                              g->level_data->collision_count, dt,
                              character_on_collision);
+
+    if (g->player.is_dead) {
+      g->stage = LOSE;
+    }
+    if (g->player.go_next_level) {
+      g->progression += 1;
+      next_level(g, g->progression);
+    }
+
     character_update(&g->player, g->particle_system, dt, false);
     particle_system_update(g->particle_system, dt);
 
@@ -254,8 +278,6 @@ void game_update(void *ctx) {
     break;
   }
   menu_update(&g->menu, g);
-  
-  
 }
 
 void game_loop(void *ctx) {
@@ -263,10 +285,10 @@ void game_loop(void *ctx) {
   game_draw(ctx);
 }
 
-void game_exit(void *ctx) { 
-  CloseWindow(); 
+void game_exit(void *ctx) {
+  CloseWindow();
   GameContext *g = (GameContext *)ctx;
-    UnloadMusicStream(g->menu.au_lib.background_music); 
-    CloseAudioDevice();
-    shader_manager_unload(&g->shader_manager);
+  UnloadMusicStream(g->menu.au_lib.background_music);
+  CloseAudioDevice();
+  shader_manager_unload(&g->shader_manager);
 }

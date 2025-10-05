@@ -8,20 +8,19 @@
 #include "../vendor/slc.h"
 
 #include "character.h"
-#include "menu.h"
 #include "collision_system.h"
 #include "enemy.h"
+#include "menu.h"
 #include "particle_system.h"
 #include "shader_manager.h"
 #include <math.h>
 
-enum Game_stage
-{
-    START,
-    RUNNING,
-    PAUSED,
-    WIN,
-    LOSE,
+enum Game_stage {
+  START,
+  RUNNING,
+  PAUSED,
+  WIN,
+  LOSE,
 };
 
 typedef struct GameContext {
@@ -29,11 +28,14 @@ typedef struct GameContext {
   slc_MemArena *g_arena; // per game allocation
   slc_MemArena *f_arena; // per frame allocation
 
+  int progression;
+
   // Shader Manager
   ShaderManager shader_manager;
 
   // Particle System
   ParticleSystem *particle_system;
+  Color bcolor;
 
   // Map
   Vector2 anchor;
