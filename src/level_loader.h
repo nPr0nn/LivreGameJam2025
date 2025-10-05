@@ -107,11 +107,11 @@ static inline void level_draw(LevelData *level_data, Vector2 player_pos) {
     }
 
     // --- DRAWING LOGIC ---
-    i32 x = level_data->collisions[i].x;
-    i32 y = level_data->collisions[i].y;
-    i32 w = level_data->collisions[i].w;
-    i32 h = level_data->collisions[i].h;
-    DrawRectangleLines(x, y, w, h, RED);
+    // i32 x = level_data->collisions[i].x;
+    // i32 y = level_data->collisions[i].y;
+    // i32 w = level_data->collisions[i].w;
+    // i32 h = level_data->collisions[i].h;
+    // DrawRectangleLines(x, y, w, h, RED);
   }
 }
 

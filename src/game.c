@@ -18,14 +18,19 @@ Vector2 get_world_pos_in_texture(GameContext *g, Vector2 world_pos) {
 }
 
 void next_level(GameContext *g, int level) {
+
+  char background_path[128];
+  snprintf(background_path, sizeof(background_path), "images/background%d.png",
+           level);
+
   // --- Load background ---
-  Image background_image = LoadImage("images/background.png");
+  Image background_image = LoadImage(background_path);
   g->background = LoadTextureFromImage(background_image);
   UnloadImage(background_image);
 
   // --- Build map file path ---
   char path[128];
-  snprintf(path, sizeof(path), "images/levels/map%d.json", level);
+  snprintf(path, sizeof(path), "images/levels/%d.json", level);
 
   // --- Load and initialize level ---
   g->level_data = load_level_data(path, g->g_arena);
@@ -85,7 +90,7 @@ void game_init(void *ctx) {
   // --- Particle System ---
   g->particle_system = particle_system_create(g->g_arena, 1000);
 
-  next_level(g, 1);
+  next_level(g, 2);
 
   // --- Entities Init ---
   menu_init(&g->menu, (Vector2){0.0, 0.0},
