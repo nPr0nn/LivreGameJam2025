@@ -137,7 +137,7 @@ void game_draw(void *ctx) {
     // scrolling.
     float bg_scale = 0.5f;
     f32 z = 250;
-    if (g->progression == 4 || g->progression == 3) {
+    if (g->progression == 4) {
       z = 210;
     }
 
@@ -278,11 +278,6 @@ void game_update(void *ctx) {
 
     character_update(&g->player, g->particle_system, dt, false);
     particle_system_update(g->particle_system, dt);
-    break;
-  case RESETING:
-    g->stage = RUNNING;
-    next_level(g, 1);
-    break;
 
   default:
     break;
