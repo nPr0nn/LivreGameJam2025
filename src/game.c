@@ -70,6 +70,7 @@ void game_init(void *ctx) {
   if (screen_height < scaled_height)
     screen_height = scaled_height;
 
+  SetConfigFlags(FLAG_FULLSCREEN_MODE);
   InitWindow(screen_width, screen_height, "Livre GameJam");
   InitAudioDevice();
 
@@ -124,15 +125,19 @@ void game_draw(void *ctx) {
   const int window_width = GetScreenWidth();
   const int window_height = GetScreenHeight();
 
-  int scale_factor = window_height / target_height;
+  // Maintain pixel-perfect scale and correct aspect ratio
+  int scale_x = window_width / target_width;
+  int scale_y = window_height / target_height;
+  int scale_factor = (scale_x < scale_y) ? scale_x : scale_y;
   if (scale_factor < 1)
     scale_factor = 1;
 
   const int scaled_width = target_width * scale_factor;
   const int scaled_height = target_height * scale_factor;
 
+  // Center texture horizontally and vertically
   const int offset_x = (window_width - scaled_width) / 2;
-  const int offset_y = 0;
+  const int offset_y = (window_height - scaled_height) / 2;
 
   // --- Render to low-res texture ---
   BeginTextureMode(g->screen);
