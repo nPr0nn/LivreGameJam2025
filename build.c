@@ -23,7 +23,7 @@ void build_vendors(String target_folder_path, bool build_to_web,
       string_from_cstr("rtext", arena_ptr),
       string_from_cstr("rtextures", arena_ptr),
       string_from_cstr("utils", arena_ptr),
-      //  string_from_cstr("rglfw", arena_ptr)
+      //             string_from_cstr("rglfw", arena_ptr)
   };
   i32 num_raylib_modules = stack_array_size(raylib_modules);
 
@@ -184,6 +184,8 @@ void build_game(String build_folder_path, String exec_name, bool build_to_web,
         string_from_cstr("-DPLATFORM_WEB", arena_ptr),
         string_from_cstr("--preload-file", arena_ptr),
         string_from_cstr("images", arena_ptr),
+        string_from_cstr("--preload-file", arena_ptr),
+        string_from_cstr("sounds", arena_ptr),
 
     };
     cmd_exec(stack_array_size(args), args);

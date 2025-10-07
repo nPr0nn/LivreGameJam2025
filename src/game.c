@@ -19,8 +19,7 @@ Vector2 get_world_pos_in_texture(GameContext *g, Vector2 world_pos) {
 
 void next_level(GameContext *g, int level) {
 
-  if(level ==5)
-  {
+  if (level == 5) {
     g->stage = WIN;
     return;
   }
@@ -48,6 +47,8 @@ void next_level(GameContext *g, int level) {
 }
 
 void game_init(void *ctx) {
+  SetTraceLogLevel(LOG_NONE); // Disable raylib trace log messages
+
   GameContext *g = (GameContext *)ctx;
   g->is_running = true;
   g->progression = 1;
@@ -61,18 +62,17 @@ void game_init(void *ctx) {
   const i32 scaled_width = target_width * scale_factor;
   const i32 scaled_height = target_height * scale_factor;
 
-  i32 monitor_width = 1080;
-  i32 monitor_height = 540;
+  i32 screen_width = 1080;
+  i32 screen_height = 540;
 
-  if (monitor_width < scaled_width)
-    monitor_width = scaled_width;
-  if (monitor_height < scaled_height)
-    monitor_height = scaled_height;
+  if (screen_width < scaled_width)
+    screen_width = scaled_width;
+  if (screen_height < scaled_height)
+    screen_height = scaled_height;
 
-  InitWindow(monitor_width, monitor_height, "Livre GameJam");
-#ifndef PLATFORM_WEB
+  InitWindow(screen_width, screen_height, "Livre GameJam");
   InitAudioDevice();
-#endif
+
   // --- Create the low-res render texture ---
   g->screen = LoadRenderTexture(target_width, target_height);
   SetTextureFilter(g->screen.texture,
@@ -101,7 +101,7 @@ void game_init(void *ctx) {
   // --- Entities Init ---
   menu_init(&g->menu, (Vector2){0.0, 0.0},
             (Vector2){target_width, target_height},
-            (Vector2){monitor_width, monitor_height},
+            (Vector2){screen_width, screen_height},
             (Vector2){scaled_width, scaled_height}, g);
 }
 
@@ -275,7 +275,7 @@ void game_update(void *ctx) {
 
     if (g->player.is_dead) {
       g->stage = LOSE;
-      g->progression = 0;
+      g->progression = 1;
     }
     if (g->player.go_next_level) {
       g->progression += 1;

@@ -176,15 +176,19 @@ void menu_draw(Menu *self) {
         (Color){255, 255, 255, 255});
     break;
 
-    case LOSE:
+  case LOSE:
 
-    DrawTextureRec(self->lose_texture, (Rectangle){0,0,self->screen_dim.x,self->screen_dim.y}, (Vector2){0.f,0.f}, (Color){255,255,255,255});
+    DrawTextureRec(self->lose_texture,
+                   (Rectangle){0, 0, self->screen_dim.x, self->screen_dim.y},
+                   (Vector2){0.f, 0.f}, (Color){255, 255, 255, 255});
     DrawText("Você perdeu :( ", 10, 10, 18, RED);
     DrawText("Aperte C \n para recomecar", 20, 70, 10, LIGHTGRAY);
     break;
-    case WIN:
+  case WIN:
 
-    DrawTextureRec(self->start_texture, (Rectangle){0,0,self->screen_dim.x,self->screen_dim.y}, (Vector2){0.f,0.f}, (Color){255,255,255,255});
+    DrawTextureRec(self->start_texture,
+                   (Rectangle){0, 0, self->screen_dim.x, self->screen_dim.y},
+                   (Vector2){0.f, 0.f}, (Color){255, 255, 255, 255});
     DrawText("Você ganhou! :) ", 10, 10, 18, GREEN);
     DrawText("Aperte C \n para recomecar", 20, 70, 10, LIGHTGRAY);
     break;
@@ -198,18 +202,16 @@ void define_all_sounds_volume(Menu *menu, float volume) {
 }
 
 void action_button(Button *self, Menu *menu) {
-    switch (self->button_type) {
-        case MUSIC:
-        if (self->pressed) {
-            PauseMusicStream(menu->au_lib.background_music);
-            PauseMusicStream(menu->au_lib.start_music);
-        } else {
+  switch (self->button_type) {
+  case MUSIC:
+    if (self->pressed) {
+      PauseMusicStream(menu->au_lib.background_music);
+      PauseMusicStream(menu->au_lib.start_music);
+    } else {
       if (menu->game->stage == START)
         ResumeMusicStream(menu->au_lib.start_music);
-      if (menu->game->stage == RUNNING || menu->game->stage == PAUSED)
-      {
-          ResumeMusicStream(menu->au_lib.background_music);
-
+      if (menu->game->stage == RUNNING || menu->game->stage == PAUSED) {
+        ResumeMusicStream(menu->au_lib.background_music);
       }
     }
 
@@ -309,12 +311,9 @@ void menu_update(Menu *self, GameContext *g) {
 
   case START:
     if ((GetKeyPressed() || IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ||
-        IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))) {
-      self->game->stage = RUNNING;// RUNNING
+         IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))) {
+      self->game->stage = RUNNING; // RUNNING
       StopMusicStream(self->au_lib.start_music);
-      if (!IsAudioDeviceReady()) {
-        InitAudioDevice();
-      }
       PlayMusicStream(self->au_lib.background_music);
     }
     break;
@@ -323,10 +322,11 @@ void menu_update(Menu *self, GameContext *g) {
       self->game->stage = RESETING;
     }
     break;
-    
-    case WIN:
+
+  case WIN:
     if (IsKeyPressed(KEY_C)) {
       self->game->stage = START;
+      self->game->progression = 1;
     }
     break;
 

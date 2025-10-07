@@ -1,6 +1,3 @@
-Got it — here’s the **entire answer as one Markdown block** you can copy-paste directly into your `README.md`:
-
-````markdown
 # 📦 LivreGameJam2025
 
 **Livre Game Jam Entry 🎮** — Our project for **Livre Game Jam 2025!**  
